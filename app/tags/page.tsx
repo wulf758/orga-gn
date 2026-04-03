@@ -6,7 +6,12 @@ import { useAppData } from "@/components/app-data-provider";
 import { CreatePanel } from "@/components/create-panel";
 import { PageHero } from "@/components/page-hero";
 import { TagBadge } from "@/components/tag-badge";
-import { groupTagDefinitionsWithSections, normalizeTagLabel } from "@/lib/tags";
+import {
+  groupTagDefinitionsWithSections,
+  isSystemTagLabel,
+  isSystemTagSection,
+  normalizeTagLabel
+} from "@/lib/tags";
 
 export default function TagsPage() {
   const {
@@ -53,11 +58,15 @@ export default function TagsPage() {
     () => groupTagDefinitionsWithSections(data.tagsRegistry, data.tagSections),
     [data.tagsRegistry, data.tagSections]
   );
+  const editableSections = useMemo(
+    () => data.tagSections.filter((entry) => !isSystemTagSection(entry.label)),
+    [data.tagSections]
+  );
 
   function resetForm() {
     setEditingId(null);
-    setSection("personnages");
-    setSectionColor("#7A4E2D");
+    setSection(editableSections[0]?.label ?? "personnages");
+    setSectionColor(editableSections[0]?.color ?? "#7A4E2D");
     setLabel("");
     setDescription("");
   }
@@ -96,7 +105,7 @@ export default function TagsPage() {
 
   function handleEdit(tagId: string) {
     const target = data.tagsRegistry.find((entry) => entry.id === tagId);
-    if (!target) return;
+    if (!target || isSystemTagLabel(target.label)) return;
 
     setEditingId(target.id);
     setSection(target.section);
@@ -107,7 +116,7 @@ export default function TagsPage() {
 
   function handleSectionSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!sectionDraftLabel.trim()) return;
+    if (!sectionDraftLabel.trim() || isSystemTagSection(sectionDraftLabel)) return;
 
     if (editingSectionId) {
       updateTagSection({
@@ -127,7 +136,7 @@ export default function TagsPage() {
 
   function handleEditSection(sectionId: string) {
     const target = data.tagSections.find((entry) => entry.id === sectionId);
-    if (!target) return;
+    if (!target || isSystemTagSection(target.label)) return;
 
     setEditingSectionId(target.id);
     setSectionDraftLabel(target.label);
@@ -219,7 +228,7 @@ export default function TagsPage() {
                     value={section}
                     onChange={(event) => handleSectionChange(event.target.value)}
                   >
-                    {data.tagSections.map((entry) => (
+                    {editableSections.map((entry) => (
                       <option key={entry.id} value={entry.label}>
                         {entry.label}
                       </option>
@@ -304,56 +313,74 @@ export default function TagsPage() {
                   <p className="section-kicker">Section</p>
                   <h3 className="section-title">{group.section}</h3>
                 </div>
-                <div className="form-actions" style={{ marginLeft: "auto" }}>
-                  <button
-                    type="button"
-                    className="button-secondary-light"
-                    onClick={() => {
-                      const target = data.tagSections.find((entry) => entry.label === group.section);
-                      if (!target) return;
-                      handleEditSection(target.id);
-                    }}
-                  >
-                    Modifier la section
-                  </button>
-                </div>
+                {!isSystemTagSection(group.section) ? (
+                  <div className="form-actions" style={{ marginLeft: "auto" }}>
+                    <button
+                      type="button"
+                      className="button-secondary-light"
+                      onClick={() => {
+                        const target = data.tagSections.find((entry) => entry.label === group.section);
+                        if (!target) return;
+                        handleEditSection(target.id);
+                      }}
+                    >
+                      Modifier la section
+                    </button>
+                  </div>
+                ) : (
+                  <div className="form-actions" style={{ marginLeft: "auto" }}>
+                    <span className="chip">Section systeme</span>
+                  </div>
+                )}
               </div>
               <div className="tags-grid">
                 {group.definitions.length ? (
                   group.definitions.map((definition) => (
                     <article className="tag-registry-item" key={definition.id}>
-                      <button
-                        type="button"
-                        className="tag-edit-trigger"
-                        onClick={() => handleEdit(definition.id)}
-                      >
+                      {isSystemTagLabel(definition.label) ? (
                         <div className="tag-registry-meta">
                           <TagBadge tag={definition.label} definitions={data.tagsRegistry} />
                           <span className="chip">
                             {usageMap.get(normalizeTagLabel(definition.label)) ?? 0} usage(s)
                           </span>
-                          <span className="chip">Cliquer pour modifier</span>
+                          <span className="chip">Tag systeme</span>
                         </div>
-                      </button>
-                      <p>{definition.description || "Aucune description pour l'instant."}</p>
-                      <div className="form-actions">
-                        <button type="button" className="button-primary" onClick={() => handleEdit(definition.id)}>
-                          Modifier
-                        </button>
+                      ) : (
                         <button
                           type="button"
-                          className="button-secondary"
-                          onClick={() => {
-                            if (!window.confirm(`Supprimer le tag "${definition.label}" ?`)) return;
-                            deleteTagDefinition(definition.id);
-                            if (editingId === definition.id) {
-                              resetForm();
-                            }
-                          }}
+                          className="tag-edit-trigger"
+                          onClick={() => handleEdit(definition.id)}
                         >
-                          Supprimer
+                          <div className="tag-registry-meta">
+                            <TagBadge tag={definition.label} definitions={data.tagsRegistry} />
+                            <span className="chip">
+                              {usageMap.get(normalizeTagLabel(definition.label)) ?? 0} usage(s)
+                            </span>
+                            <span className="chip">Cliquer pour modifier</span>
+                          </div>
                         </button>
-                      </div>
+                      )}
+                      <p>{definition.description || "Aucune description pour l'instant."}</p>
+                      {!isSystemTagLabel(definition.label) ? (
+                        <div className="form-actions">
+                          <button type="button" className="button-primary" onClick={() => handleEdit(definition.id)}>
+                            Modifier
+                          </button>
+                          <button
+                            type="button"
+                            className="button-secondary"
+                            onClick={() => {
+                              if (!window.confirm(`Supprimer le tag "${definition.label}" ?`)) return;
+                              deleteTagDefinition(definition.id);
+                              if (editingId === definition.id) {
+                                resetForm();
+                              }
+                            }}
+                          >
+                            Supprimer
+                          </button>
+                        </div>
+                      ) : null}
                     </article>
                   ))
                 ) : (

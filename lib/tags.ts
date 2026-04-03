@@ -1,6 +1,13 @@
 import { TagDefinition, TagSection } from "@/lib/types";
 
+export const SYSTEM_TAG_SECTION = {
+  id: "section-systeme",
+  label: "systeme",
+  color: "#A63A24"
+} satisfies TagSection;
+
 export const DEFAULT_TAG_SECTIONS: TagSection[] = [
+  SYSTEM_TAG_SECTION,
   { id: "section-pilotage", label: "pilotage", color: "#A63A24" },
   { id: "section-documents", label: "documents", color: "#6F5D4B" },
   { id: "section-personnages", label: "personnages", color: "#7A4E2D" },
@@ -12,9 +19,9 @@ export const DEFAULT_TAG_DEFINITIONS: TagDefinition[] = [
   {
     id: "tag-prioritaire",
     label: "prioritaire",
-    section: "pilotage",
-    sectionColor: "#A63A24",
-    color: "#C84B31",
+    section: SYSTEM_TAG_SECTION.label,
+    sectionColor: SYSTEM_TAG_SECTION.color,
+    color: SYSTEM_TAG_SECTION.color,
     description: "Remonte dans le tableau de bord pour signaler un sujet chaud."
   },
   {
@@ -85,14 +92,22 @@ export function normalizeTagSection(value: string) {
 
 export function normalizeTagDefinition(definition: TagDefinition, index = 0): TagDefinition {
   const normalizedLabel = normalizeTagLabel(definition.label) || `tag-${index + 1}`;
-  const normalizedSection = normalizeTagSection(definition.section) || "general";
+  const normalizedSection = isSystemTagLabel(normalizedLabel)
+    ? SYSTEM_TAG_SECTION.label
+    : normalizeTagSection(definition.section) || "general";
+  const normalizedColor = isSystemTagLabel(normalizedLabel)
+    ? SYSTEM_TAG_SECTION.color
+    : definition.color?.trim() || "#8C7B75";
+  const normalizedSectionColor = isSystemTagLabel(normalizedLabel)
+    ? SYSTEM_TAG_SECTION.color
+    : definition.sectionColor?.trim() || definition.color?.trim() || "#8C7B75";
 
   return {
     id: definition.id?.trim() || `tag-${normalizedLabel.replace(/[^a-z0-9]+/g, "-")}`,
     label: normalizedLabel,
     section: normalizedSection,
-    sectionColor: definition.sectionColor?.trim() || definition.color?.trim() || "#8C7B75",
-    color: definition.color?.trim() || "#8C7B75",
+    sectionColor: normalizedSectionColor,
+    color: normalizedColor,
     description: definition.description?.trim() || ""
   };
 }
@@ -103,7 +118,10 @@ export function normalizeTagSectionDefinition(section: TagSection, index = 0): T
   return {
     id: section.id?.trim() || `section-${normalizedLabel.replace(/[^a-z0-9]+/g, "-")}`,
     label: normalizedLabel,
-    color: section.color?.trim() || "#8C7B75"
+    color:
+      normalizedLabel === SYSTEM_TAG_SECTION.label
+        ? SYSTEM_TAG_SECTION.color
+        : section.color?.trim() || "#8C7B75"
   };
 }
 
@@ -131,7 +149,11 @@ export function getMergedTagSections(sections?: TagSection[] | null, definitions
     }
   }
 
-  return Array.from(merged.values()).sort((left, right) => left.label.localeCompare(right.label));
+  return Array.from(merged.values()).sort((left, right) => {
+    if (isSystemTagSection(left.label)) return -1;
+    if (isSystemTagSection(right.label)) return 1;
+    return left.label.localeCompare(right.label);
+  });
 }
 
 export function getMergedTagDefinitions(definitions?: TagDefinition[] | null) {
@@ -200,5 +222,13 @@ export function groupTagDefinitionsWithSections(
 }
 
 export function isPriorityTag(tag: string) {
+  return isSystemTagLabel(tag);
+}
+
+export function isSystemTagLabel(tag: string) {
   return normalizeTagLabel(tag) === "prioritaire";
+}
+
+export function isSystemTagSection(section: string) {
+  return normalizeTagSection(section) === SYSTEM_TAG_SECTION.label;
 }

@@ -34,6 +34,8 @@ import { formatDateLabel, formatDateTimeLabel } from "@/lib/date-utils";
 import {
   getMergedTagDefinitions,
   getMergedTagSections,
+  isSystemTagLabel,
+  isSystemTagSection,
   normalizeTagDefinition,
   normalizeTagLabel,
   normalizeTagSection,
@@ -400,7 +402,11 @@ function upsertTagSection(
   );
 
   if (!existing) {
-    return [...sections, normalized].sort((left, right) => left.label.localeCompare(right.label));
+    return [...sections, normalized].sort((left, right) => {
+      if (isSystemTagSection(left.label)) return -1;
+      if (isSystemTagSection(right.label)) return 1;
+      return left.label.localeCompare(right.label);
+    });
   }
 
   return sections
@@ -409,7 +415,11 @@ function upsertTagSection(
         ? { ...section, label: normalized.label, color: normalized.color }
         : section
     )
-    .sort((left, right) => left.label.localeCompare(right.label));
+    .sort((left, right) => {
+      if (isSystemTagSection(left.label)) return -1;
+      if (isSystemTagSection(right.label)) return 1;
+      return left.label.localeCompare(right.label);
+    });
 }
 
 function makeStoryboardCards(count: number, existingCards: StoryboardCard[] = []) {
@@ -1294,7 +1304,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       },
       createTagSection(input) {
         const nextLabel = normalizeTagSection(input.label);
-        if (!nextLabel) return;
+        if (!nextLabel || isSystemTagSection(nextLabel)) return;
 
         setData((current) => {
           const existing = current.tagSections.find(
@@ -1333,6 +1343,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         setData((current) => {
           const target = current.tagSections.find((section) => section.id === input.id);
           if (!target) {
+            return current;
+          }
+          if (isSystemTagSection(target.label) || isSystemTagSection(nextLabel)) {
             return current;
           }
 
@@ -1385,6 +1398,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           if (!target) {
             return current;
           }
+          if (isSystemTagSection(target.label)) {
+            return current;
+          }
 
           const isUsed = current.tagsRegistry.some(
             (definition) =>
@@ -1421,7 +1437,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       },
       createTagDefinition(input) {
         const nextLabel = normalizeTagLabel(input.label);
-        if (!nextLabel) return;
+        if (!nextLabel || isSystemTagLabel(nextLabel) || isSystemTagSection(input.section)) return;
 
         setData((current) => {
           const existing = current.tagsRegistry.find(
@@ -1465,6 +1481,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         setData((current) => {
           const target = current.tagsRegistry.find((definition) => definition.id === input.id);
           if (!target) {
+            return current;
+          }
+          if (
+            isSystemTagLabel(target.label) ||
+            isSystemTagLabel(nextLabel) ||
+            isSystemTagSection(input.section)
+          ) {
             return current;
           }
 
@@ -1548,6 +1571,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         setData((current) => {
           const target = current.tagsRegistry.find((definition) => definition.id === id);
           if (!target) {
+            return current;
+          }
+          if (isSystemTagLabel(target.label)) {
             return current;
           }
 
