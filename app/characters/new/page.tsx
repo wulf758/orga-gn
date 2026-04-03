@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { useAppData } from "@/components/app-data-provider";
 import { PageHero } from "@/components/page-hero";
 import { TagPicker } from "@/components/tag-picker";
-import { normalizeTagSection } from "@/lib/tags";
 
 function toLines(value: string) {
   return value
@@ -26,9 +25,6 @@ export default function NewCharacterPage() {
   const [background, setBackground] = useState("");
   const [objectivesText, setObjectivesText] = useState("");
   const [secretsText, setSecretsText] = useState("");
-  const factionTags = data.tagsRegistry.filter(
-    (definition) => normalizeTagSection(definition.section) === "faction"
-  );
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -109,11 +105,6 @@ export default function NewCharacterPage() {
                     )
                   }
                 />
-                {factionTags.length ? (
-                  <p className="field-help">
-                    La faction est maintenant geree via les tags de la section `faction`.
-                  </p>
-                ) : null}
               </div>
               <div className="field">
                 <label htmlFor="character-create-player-notes">Joueur / contraintes</label>

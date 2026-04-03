@@ -20,7 +20,7 @@ export default function CharactersPage() {
       <PageHero
         kicker="Personnages / atelier d'ecriture"
         title="Des fiches simples pour les PJ et les PNJ."
-        copy="Chaque fiche personnage reste volontairement legere pour l'instant : une faction, un background, des objectifs et des secrets."
+        copy="Chaque fiche personnage reste volontairement legere pour l'instant : des tags, un background, des objectifs et des secrets."
         actions={
           <>
             <Link href="/characters/new" className="button-primary">
@@ -67,7 +67,6 @@ export default function CharactersPage() {
                   ) : null}
                   <p className="character-preview">{getCharacterPreview(character.background)}</p>
                   <div className="meta-line">
-                    <span>{character.faction}</span>
                     <span>{character.objectives.length} objectif(s)</span>
                     <span>{character.secrets.length} secret(s)</span>
                   </div>
@@ -100,7 +99,6 @@ export default function CharactersPage() {
                   ) : null}
                   <p className="character-preview">{getCharacterPreview(character.background)}</p>
                   <div className="meta-line">
-                    <span>{character.faction}</span>
                     <span>{character.objectives.length} objectif(s)</span>
                     <span>{character.secrets.length} secret(s)</span>
                   </div>

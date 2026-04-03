@@ -9,7 +9,6 @@ import { PageHero } from "@/components/page-hero";
 import { RichTextPreview } from "@/components/rich-text-preview";
 import { TagBadge } from "@/components/tag-badge";
 import { TagPicker } from "@/components/tag-picker";
-import { findTagDefinition, normalizeTagSection } from "@/lib/tags";
 
 function toLines(value: string) {
   return value
@@ -43,11 +42,6 @@ export default function CharacterDetailPage() {
   }
 
   const currentCharacter = character;
-  const factionLabel =
-    currentCharacter.tags
-      .filter((tag) => normalizeTagSection(findTagDefinition(data.tagsRegistry, tag)?.section ?? "") === "faction")
-      .join(", ") || currentCharacter.faction || "Sans faction";
-
   function insertAroundSelection(before: string, after = before) {
     const textarea = backgroundRef.current;
     if (!textarea) return;
@@ -104,7 +98,7 @@ export default function CharacterDetailPage() {
   return (
     <>
       <PageHero
-        kicker={`${currentCharacter.role} / ${factionLabel}`}
+        kicker={`${currentCharacter.role} / fiche personnage`}
         title={currentCharacter.name}
         copy=""
         actions={
@@ -136,10 +130,6 @@ export default function CharacterDetailPage() {
             <div className="detail-block">
               <h3>Type</h3>
               <p>{currentCharacter.role}</p>
-            </div>
-            <div className="detail-block">
-              <h3>Faction</h3>
-              <p>{factionLabel}</p>
             </div>
             <div className="detail-block">
               <h3>Joueur</h3>
@@ -187,13 +177,10 @@ export default function CharacterDetailPage() {
                       setSelectedTags((current) =>
                         current.includes(tag)
                           ? current.filter((entry) => entry !== tag)
-                          : [...current, tag]
+                        : [...current, tag]
                       )
                     }
                   />
-                  <p className="field-help">
-                    La faction est maintenant geree via les tags de la section `faction`.
-                  </p>
                 </div>
                 <div className="field">
                   <label htmlFor="character-edit-player-notes">Joueur / contraintes</label>
@@ -253,7 +240,6 @@ export default function CharacterDetailPage() {
                   Modifier
                 </button>
               </div>
-              <p className="section-copy">{factionLabel}</p>
               <div className="note-read-content">
                 <RichTextPreview text={currentCharacter.background} />
               </div>
