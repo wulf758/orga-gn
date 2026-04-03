@@ -181,12 +181,19 @@ export default function TagsPage() {
               <div className="tags-grid">
                 {group.definitions.map((definition) => (
                   <article className="tag-registry-item" key={definition.id}>
-                    <div className="tag-registry-meta">
-                      <TagBadge tag={definition.label} definitions={data.tagsRegistry} />
-                      <span className="chip">
-                        {usageMap.get(normalizeTagLabel(definition.label)) ?? 0} usage(s)
-                      </span>
-                    </div>
+                    <button
+                      type="button"
+                      className="tag-edit-trigger"
+                      onClick={() => handleEdit(definition.id)}
+                    >
+                      <div className="tag-registry-meta">
+                        <TagBadge tag={definition.label} definitions={data.tagsRegistry} />
+                        <span className="chip">
+                          {usageMap.get(normalizeTagLabel(definition.label)) ?? 0} usage(s)
+                        </span>
+                        <span className="chip">Cliquer pour modifier</span>
+                      </div>
+                    </button>
                     <p>{definition.description || "Aucune description pour l'instant."}</p>
                     <div className="form-actions">
                       <button type="button" className="button-primary" onClick={() => handleEdit(definition.id)}>
