@@ -1,24 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import { useAppData } from "@/components/app-data-provider";
 import { PageHero } from "@/components/page-hero";
 import { StatusPill } from "@/components/status-pill";
 import { TagBadge } from "@/components/tag-badge";
 
-const KRAFT_STATUSES = ["A commencer", "A finir", "Fini"] as const;
-
 export default function KraftPage() {
-  const { data, updateKraftItem, deleteKraftItem } = useAppData();
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [title, setTitle] = useState("");
-  const [summary, setSummary] = useState("");
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [owner, setOwner] = useState("");
-  const [status, setStatus] =
-    useState<(typeof KRAFT_STATUSES)[number]>("A commencer");
+  const { data, deleteKraftItem } = useAppData();
 
   const kraftToDo = useMemo(
     () => data.kraftItems.filter((item) => item.status !== "Fini"),
@@ -28,63 +19,10 @@ export default function KraftPage() {
     () => data.kraftItems.filter((item) => item.status === "Fini"),
     [data.kraftItems]
   );
-  const editingItem =
-    data.kraftItems.find((item) => item.id === editingId) ?? null;
-
-  useEffect(() => {
-    if (!editingItem) {
-      setTitle("");
-      setSummary("");
-      setSelectedTags([]);
-      setOwner("");
-      setStatus("A commencer");
-      return;
-    }
-
-    setTitle(editingItem.title);
-    setSummary(editingItem.summary);
-    setSelectedTags(editingItem.tags);
-    setOwner(editingItem.owner);
-    setStatus(editingItem.status);
-  }, [editingItem]);
-
-  function resetForm() {
-    setEditingId(null);
-    setTitle("");
-    setSummary("");
-    setSelectedTags([]);
-    setOwner("");
-    setStatus("A commencer");
-  }
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!title.trim()) return;
-
-    const payload = {
-      title: title.trim(),
-      summary: summary.trim() || "Kraft a completer.",
-      tags: selectedTags,
-      owner: owner.trim() || "Responsable a definir",
-      status
-    };
-
-    if (editingId) {
-      updateKraftItem({
-        id: editingId,
-        ...payload
-      });
-    }
-
-    resetForm();
-  }
 
   function handleDelete(id: string, label: string) {
     if (!window.confirm(`Supprimer le kraft "${label}" ?`)) return;
     deleteKraftItem(id);
-    if (editingId === id) {
-      resetForm();
-    }
   }
 
   return (
@@ -166,13 +104,9 @@ export default function KraftPage() {
                     </StatusPill>
                   </div>
                   <div className="form-actions" style={{ marginTop: 14 }}>
-                    <button
-                      type="button"
-                      className="button-primary"
-                      onClick={() => setEditingId(item.id)}
-                    >
+                    <Link href={`/kraft/${item.id}`} className="button-primary">
                       Modifier
-                    </button>
+                    </Link>
                     <button
                       type="button"
                       className="button-secondary"
@@ -219,13 +153,9 @@ export default function KraftPage() {
                     <StatusPill tone="success">{item.status}</StatusPill>
                   </div>
                   <div className="form-actions" style={{ marginTop: 14 }}>
-                    <button
-                      type="button"
-                      className="button-primary"
-                      onClick={() => setEditingId(item.id)}
-                    >
+                    <Link href={`/kraft/${item.id}`} className="button-primary">
                       Modifier
-                    </button>
+                    </Link>
                     <button
                       type="button"
                       className="button-secondary"
