@@ -1,6 +1,5 @@
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { DatabaseSync } from "node:sqlite";
 
 import { getEmptyAppData } from "@/lib/data";
 import { AppData, WorkspaceSummary } from "@/lib/types";
@@ -32,9 +31,20 @@ type AdminSessionRow = {
   created_at: string;
 };
 
+type SqliteStatement = {
+  all: () => unknown[];
+  get: (...args: unknown[]) => unknown;
+  run: (...args: unknown[]) => { changes: number };
+};
+
+type SqliteDatabase = {
+  exec: (sql: string) => void;
+  prepare: (sql: string) => SqliteStatement;
+};
+
 declare global {
   // eslint-disable-next-line no-var
-  var __hfgnDatabase: DatabaseSync | undefined;
+  var __hfgnDatabase: SqliteDatabase | undefined;
 }
 
 const WORKSPACE_SELECT =
@@ -48,7 +58,19 @@ function getDatabasePath() {
   return join(directory, "hfgn.sqlite");
 }
 
+function getSqliteDatabaseConstructor(): new (path: string) => SqliteDatabase {
+  const runtimeRequire = new Function(
+    "modulePath",
+    "return require(modulePath);"
+  ) as (modulePath: string) => {
+    DatabaseSync: new (path: string) => SqliteDatabase;
+  };
+
+  return runtimeRequire("node:sqlite").DatabaseSync;
+}
+
 function createSqliteDatabase() {
+  const DatabaseSync = getSqliteDatabaseConstructor();
   const database = new DatabaseSync(getDatabasePath());
   database.exec(`
     PRAGMA foreign_keys = ON;
