@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { CreatePanel } from "@/components/create-panel";
@@ -14,7 +14,7 @@ import { formatDateLabel } from "@/lib/date-utils";
 function StoryboardPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { data, createTimelineDay, deleteStoryboardScene } = useAppData();
+  const { data, deleteStoryboardScene } = useAppData();
 
   const orderedScenes = useMemo(
     () =>
@@ -37,8 +37,6 @@ function StoryboardPageContent() {
 
   const sceneFromQuery = searchParams.get("scene");
   const [selectedSceneId, setSelectedSceneId] = useState(sceneFromQuery ?? orderedScenes[0]?.id ?? "");
-  const [newTimelineDayLabel, setNewTimelineDayLabel] = useState("");
-  const [newTimelineDayDate, setNewTimelineDayDate] = useState("");
 
   const selectedScene =
     orderedScenes.find((scene) => scene.id === selectedSceneId) ?? orderedScenes[0] ?? null;
@@ -60,19 +58,6 @@ function StoryboardPageContent() {
     const day = data.timelineDays.find((entry) => entry.id === currentDayId);
     if (!day) return "Sans jour";
     return `${day.label} - ${formatDateLabel(day.dateISO, day.dateISO)}`;
-  }
-
-  function handleCreateDay(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!newTimelineDayLabel.trim() || !newTimelineDayDate) return;
-
-    createTimelineDay({
-      label: newTimelineDayLabel.trim(),
-      dateISO: newTimelineDayDate
-    });
-
-    setNewTimelineDayLabel("");
-    setNewTimelineDayDate("");
   }
 
   function handleDelete(sceneId: string, title: string) {
@@ -128,34 +113,29 @@ function StoryboardPageContent() {
           </div>
 
           <CreatePanel
-            title="Creer un jour"
-            description="Ajoute un jour de timeline reutilisable dans les scenes du storyboard."
+            title="Jours partages"
+            description="Les jours utilises par le storyboard sont exactement ceux de la timeline. Leur creation et leur edition se font au meme endroit."
           >
-            <form className="form-stack" onSubmit={handleCreateDay}>
-              <div className="field">
-                <label htmlFor="story-new-day-label">Nom du jour</label>
-                <input
-                  id="story-new-day-label"
-                  value={newTimelineDayLabel}
-                  onChange={(event) => setNewTimelineDayLabel(event.target.value)}
-                  placeholder="Exemple : Jour 2"
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="story-new-day-date">Date</label>
-                <input
-                  id="story-new-day-date"
-                  type="date"
-                  value={newTimelineDayDate}
-                  onChange={(event) => setNewTimelineDayDate(event.target.value)}
-                />
-              </div>
-              <div className="form-actions">
-                <button type="submit" className="button-primary">
-                  Ajouter le jour
-                </button>
-              </div>
-            </form>
+            <div className="list-stack">
+              {data.timelineDays.length ? (
+                data.timelineDays
+                  .slice()
+                  .sort((left, right) => left.order - right.order)
+                  .map((day) => (
+                    <div className="list-item" key={day.id}>
+                      <h3>{day.label}</h3>
+                      <p>{formatDateLabel(day.dateISO, day.dateISO)}</p>
+                    </div>
+                  ))
+              ) : (
+                <div className="empty-state">Aucun jour defini pour l'instant.</div>
+              )}
+            </div>
+            <div className="form-actions">
+              <Link href="/timeline" className="button-secondary">
+                Gerer les jours dans Timeline
+              </Link>
+            </div>
           </CreatePanel>
 
           <div className="list-stack">

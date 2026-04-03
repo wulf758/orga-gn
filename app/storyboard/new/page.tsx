@@ -89,6 +89,9 @@ export default function NewStoryboardScenePage() {
                       </option>
                     ))}
                   </select>
+                  <p className="field-hint">
+                    Les jours sont partages avec la timeline et se gerent depuis cette page.
+                  </p>
                 </div>
                 <div className="span-4 field">
                   <label htmlFor="story-create-start">Debut</label>

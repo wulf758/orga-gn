@@ -182,6 +182,9 @@ export default function StoryboardSceneDetailPage() {
                       </option>
                     ))}
                   </select>
+                  <p className="field-hint">
+                    Les jours sont partages avec la timeline et se gerent depuis cette page.
+                  </p>
                 </div>
                 <div className="span-2 field">
                   <label htmlFor="story-edit-start">Debut</label>
