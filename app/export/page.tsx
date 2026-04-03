@@ -84,6 +84,7 @@ export default function ExportPage() {
     "storyboard",
     "kraft"
   ]);
+  const [includePlayerInfo, setIncludePlayerInfo] = useState(false);
 
   const plotCategoryMap = useMemo(
     () => Object.fromEntries(data.plotCategories.map((category) => [category.slug, category.title])),
@@ -167,17 +168,32 @@ export default function ExportPage() {
             </p>
             <div className="export-option-list">
               {exportOptions.map((option) => (
-                <label key={option.key} className="export-option">
-                  <input
-                    type="checkbox"
-                    checked={selectedSet.has(option.key)}
-                    onChange={() => toggleSelection(option.key)}
-                  />
-                  <span>
-                    <strong>{option.label}</strong>
-                    <small>{option.description}</small>
-                  </span>
-                </label>
+                <div key={option.key} className="export-option-stack">
+                  <label className="export-option">
+                    <input
+                      type="checkbox"
+                      checked={selectedSet.has(option.key)}
+                      onChange={() => toggleSelection(option.key)}
+                    />
+                    <span>
+                      <strong>{option.label}</strong>
+                      <small>{option.description}</small>
+                    </span>
+                  </label>
+                  {(option.key === "pj" || option.key === "pnj") && selectedSet.has(option.key) ? (
+                    <label className="export-sub-option">
+                      <input
+                        type="checkbox"
+                        checked={includePlayerInfo}
+                        onChange={() => setIncludePlayerInfo((current) => !current)}
+                      />
+                      <span>
+                        <strong>Inclure les informations joueur</strong>
+                        <small>Allergies, phobies, limites de jeu et autres contraintes.</small>
+                      </span>
+                    </label>
+                  ) : null}
+                </div>
               ))}
             </div>
             <div className="form-actions">
@@ -277,6 +293,12 @@ export default function ExportPage() {
                     </div>
                     <h4>{character.name}</h4>
                     <p>{character.background}</p>
+                    {includePlayerInfo && character.playerNotes?.trim() ? (
+                      <div className="export-block">
+                        <h5>Informations joueur</h5>
+                        <p>{character.playerNotes}</p>
+                      </div>
+                    ) : null}
                     <div className="export-block">
                       <h5>Objectifs</h5>
                       <ul>
@@ -318,6 +340,12 @@ export default function ExportPage() {
                     </div>
                     <h4>{character.name}</h4>
                     <p>{character.background}</p>
+                    {includePlayerInfo && character.playerNotes?.trim() ? (
+                      <div className="export-block">
+                        <h5>Informations joueur</h5>
+                        <p>{character.playerNotes}</p>
+                      </div>
+                    ) : null}
                     <div className="export-block">
                       <h5>Objectifs</h5>
                       <ul>

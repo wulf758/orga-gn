@@ -1317,6 +1317,11 @@ a.list-item:focus-visible {
   gap: 10px;
 }
 
+.export-option-stack {
+  display: grid;
+  gap: 8px;
+}
+
 .export-option {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -1340,6 +1345,32 @@ a.list-item:focus-visible {
 .export-option small {
   color: var(--muted);
   font-size: 0.88rem;
+}
+
+.export-sub-option {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: start;
+  margin-left: 22px;
+  padding: 10px 12px;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  background: rgba(255, 252, 246, 0.72);
+}
+
+.export-sub-option input {
+  margin-top: 4px;
+}
+
+.export-sub-option span {
+  display: grid;
+  gap: 4px;
+}
+
+.export-sub-option small {
+  color: var(--muted);
+  font-size: 0.84rem;
 }
 
 .export-sheet {
