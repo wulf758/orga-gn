@@ -9,7 +9,18 @@ import { TagBadge } from "@/components/tag-badge";
 import { groupTagDefinitionsWithSections, normalizeTagLabel } from "@/lib/tags";
 
 export default function TagsPage() {
-  const { data, createTagDefinition, updateTagDefinition, deleteTagDefinition } = useAppData();
+  const {
+    data,
+    createTagDefinition,
+    updateTagDefinition,
+    deleteTagDefinition,
+    createTagSection,
+    updateTagSection,
+    deleteTagSection
+  } = useAppData();
+  const [sectionDraftLabel, setSectionDraftLabel] = useState("personnages");
+  const [sectionDraftColor, setSectionDraftColor] = useState("#7A4E2D");
+  const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
   const [section, setSection] = useState("personnages");
   const [sectionColor, setSectionColor] = useState("#7A4E2D");
   const [label, setLabel] = useState("");
@@ -51,6 +62,12 @@ export default function TagsPage() {
     setDescription("");
   }
 
+  function resetSectionForm() {
+    setEditingSectionId(null);
+    setSectionDraftLabel("personnages");
+    setSectionDraftColor("#7A4E2D");
+  }
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!label.trim()) return;
@@ -88,6 +105,35 @@ export default function TagsPage() {
     setDescription(target.description ?? "");
   }
 
+  function handleSectionSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!sectionDraftLabel.trim()) return;
+
+    if (editingSectionId) {
+      updateTagSection({
+        id: editingSectionId,
+        label: sectionDraftLabel,
+        color: sectionDraftColor
+      });
+    } else {
+      createTagSection({
+        label: sectionDraftLabel,
+        color: sectionDraftColor
+      });
+    }
+
+    resetSectionForm();
+  }
+
+  function handleEditSection(sectionId: string) {
+    const target = data.tagSections.find((entry) => entry.id === sectionId);
+    if (!target) return;
+
+    setEditingSectionId(target.id);
+    setSectionDraftLabel(target.label);
+    setSectionDraftColor(target.color);
+  }
+
   function handleSectionChange(nextSection: string) {
     setSection(nextSection);
     const matchingSection = data.tagSections.find((entry) => entry.label === nextSection);
@@ -109,79 +155,132 @@ export default function TagsPage() {
           </>
         }
         aside={
-          <CreatePanel
-            title={editingId ? "Modifier un tag" : "Creer un tag"}
-            description="Un tag bien defini sera plus facile a retrouver partout dans l'outil."
-          >
-            <form className="form-stack" onSubmit={handleSubmit}>
-              <div className="field">
-                <label htmlFor="tag-section">Section</label>
-                <select
-                  id="tag-section"
-                  value={section}
-                  onChange={(event) => handleSectionChange(event.target.value)}
-                >
-                  {data.tagSections.map((entry) => (
-                    <option key={entry.id} value={entry.label}>
-                      {entry.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="field">
-                <label htmlFor="tag-section-color">Couleur de section</label>
-                <input
-                  id="tag-section-color"
-                  type="color"
-                  value={sectionColor}
-                  onChange={(event) => setSectionColor(event.target.value)}
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="tag-label">Nom du tag</label>
-                <input
-                  id="tag-label"
-                  value={label}
-                  onChange={(event) => setLabel(event.target.value)}
-                  placeholder="Exemple : prioritaire"
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="tag-description">Description</label>
-                <textarea
-                  id="tag-description"
-                  value={description}
-                  onChange={(event) => setDescription(event.target.value)}
-                  placeholder="A quoi sert ce tag dans l'equipe ?"
-                />
-              </div>
-              <div className="form-actions">
-                <button type="submit" className="button-primary">
-                  {editingId ? "Enregistrer le tag" : "Ajouter le tag"}
-                </button>
-                {editingId ? (
-                  <>
-                    <button
-                      type="button"
-                      className="button-secondary-light"
-                      onClick={() => {
-                        const target = data.tagsRegistry.find((entry) => entry.id === editingId);
-                        if (!target) return;
-                        if (!window.confirm(`Supprimer le tag "${target.label}" ?`)) return;
-                        deleteTagDefinition(target.id);
-                        resetForm();
-                      }}
-                    >
-                      Supprimer
-                    </button>
-                    <button type="button" className="button-secondary-light" onClick={resetForm}>
-                      Annuler
-                    </button>
-                  </>
-                ) : null}
-              </div>
-            </form>
-          </CreatePanel>
+          <>
+            <CreatePanel
+              title={editingSectionId ? "Modifier une section" : "Creer une section"}
+              description="Les sections structurent le lexique global des tags."
+            >
+              <form className="form-stack" onSubmit={handleSectionSubmit}>
+                <div className="field">
+                  <label htmlFor="tag-section-draft">Nom de section</label>
+                  <input
+                    id="tag-section-draft"
+                    value={sectionDraftLabel}
+                    onChange={(event) => setSectionDraftLabel(event.target.value)}
+                    placeholder="Exemple : personnages"
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="tag-section-draft-color">Couleur de section</label>
+                  <input
+                    id="tag-section-draft-color"
+                    type="color"
+                    value={sectionDraftColor}
+                    onChange={(event) => setSectionDraftColor(event.target.value)}
+                  />
+                </div>
+                <div className="form-actions">
+                  <button type="submit" className="button-primary">
+                    {editingSectionId ? "Enregistrer la section" : "Ajouter la section"}
+                  </button>
+                  {editingSectionId ? (
+                    <>
+                      <button
+                        type="button"
+                        className="button-secondary-light"
+                        onClick={() => {
+                          const target = data.tagSections.find((entry) => entry.id === editingSectionId);
+                          if (!target) return;
+                          if (!window.confirm(`Supprimer la section "${target.label}" ?`)) return;
+                          deleteTagSection(target.id);
+                          resetSectionForm();
+                        }}
+                      >
+                        Supprimer
+                      </button>
+                      <button type="button" className="button-secondary-light" onClick={resetSectionForm}>
+                        Annuler
+                      </button>
+                    </>
+                  ) : null}
+                </div>
+              </form>
+            </CreatePanel>
+
+            <CreatePanel
+              title={editingId ? "Modifier un tag" : "Creer un tag"}
+              description="Un tag bien defini sera plus facile a retrouver partout dans l'outil."
+            >
+              <form className="form-stack" onSubmit={handleSubmit}>
+                <div className="field">
+                  <label htmlFor="tag-section">Section</label>
+                  <select
+                    id="tag-section"
+                    value={section}
+                    onChange={(event) => handleSectionChange(event.target.value)}
+                  >
+                    {data.tagSections.map((entry) => (
+                      <option key={entry.id} value={entry.label}>
+                        {entry.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="field">
+                  <label htmlFor="tag-section-color">Couleur de section</label>
+                  <input
+                    id="tag-section-color"
+                    type="color"
+                    value={sectionColor}
+                    onChange={(event) => setSectionColor(event.target.value)}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="tag-label">Nom du tag</label>
+                  <input
+                    id="tag-label"
+                    value={label}
+                    onChange={(event) => setLabel(event.target.value)}
+                    placeholder="Exemple : prioritaire"
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="tag-description">Description</label>
+                  <textarea
+                    id="tag-description"
+                    value={description}
+                    onChange={(event) => setDescription(event.target.value)}
+                    placeholder="A quoi sert ce tag dans l'equipe ?"
+                  />
+                </div>
+                <div className="form-actions">
+                  <button type="submit" className="button-primary">
+                    {editingId ? "Enregistrer le tag" : "Ajouter le tag"}
+                  </button>
+                  {editingId ? (
+                    <>
+                      <button
+                        type="button"
+                        className="button-secondary-light"
+                        onClick={() => {
+                          const target = data.tagsRegistry.find((entry) => entry.id === editingId);
+                          if (!target) return;
+                          if (!window.confirm(`Supprimer le tag "${target.label}" ?`)) return;
+                          deleteTagDefinition(target.id);
+                          resetForm();
+                        }}
+                      >
+                        Supprimer
+                      </button>
+                      <button type="button" className="button-secondary-light" onClick={resetForm}>
+                        Annuler
+                      </button>
+                    </>
+                  ) : null}
+                </div>
+              </form>
+            </CreatePanel>
+          </>
         }
       />
 
@@ -204,6 +303,19 @@ export default function TagsPage() {
                 <div>
                   <p className="section-kicker">Section</p>
                   <h3 className="section-title">{group.section}</h3>
+                </div>
+                <div className="form-actions" style={{ marginLeft: "auto" }}>
+                  <button
+                    type="button"
+                    className="button-secondary-light"
+                    onClick={() => {
+                      const target = data.tagSections.find((entry) => entry.label === group.section);
+                      if (!target) return;
+                      handleEditSection(target.id);
+                    }}
+                  >
+                    Modifier la section
+                  </button>
                 </div>
               </div>
               <div className="tags-grid">

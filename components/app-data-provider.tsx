@@ -274,6 +274,17 @@ type UpdateTagDefinitionInput = {
   description?: string;
 };
 
+type CreateTagSectionInput = {
+  label: string;
+  color: string;
+};
+
+type UpdateTagSectionInput = {
+  id: string;
+  label: string;
+  color: string;
+};
+
 type AppDataContextValue = {
   isReady: boolean;
   isAdminSession: boolean;
@@ -298,6 +309,9 @@ type AppDataContextValue = {
   createCategory: (input: CreateCategoryInput) => void;
   updateCategory: (input: UpdateCategoryInput) => void;
   deleteCategory: (section: CategorySection, slug: string) => void;
+  createTagSection: (input: CreateTagSectionInput) => void;
+  updateTagSection: (input: UpdateTagSectionInput) => void;
+  deleteTagSection: (id: string) => void;
   createTagDefinition: (input: CreateTagDefinitionInput) => void;
   updateTagDefinition: (input: UpdateTagDefinitionInput) => void;
   deleteTagDefinition: (id: string) => void;
@@ -1277,6 +1291,133 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             ...current.updates
           ]
         }));
+      },
+      createTagSection(input) {
+        const nextLabel = normalizeTagSection(input.label);
+        if (!nextLabel) return;
+
+        setData((current) => {
+          const existing = current.tagSections.find(
+            (section) => normalizeTagSection(section.label) === nextLabel
+          );
+          if (existing) {
+            return current;
+          }
+
+          const nextSection = normalizeTagSectionDefinition({
+            id: `section-${slugify(nextLabel) || Date.now().toString()}`,
+            label: nextLabel,
+            color: input.color
+          });
+
+          return {
+            ...current,
+            tagSections: [...current.tagSections, nextSection].sort((left, right) =>
+              left.label.localeCompare(right.label)
+            ),
+            updates: [
+              makeUpdate(
+                "Tags",
+                `Section ajoutee : ${nextSection.label}`,
+                "Une nouvelle section de tags a ete creee."
+              ),
+              ...current.updates
+            ]
+          };
+        });
+      },
+      updateTagSection(input) {
+        const nextLabel = normalizeTagSection(input.label);
+        if (!nextLabel) return;
+
+        setData((current) => {
+          const target = current.tagSections.find((section) => section.id === input.id);
+          if (!target) {
+            return current;
+          }
+
+          const duplicate = current.tagSections.find(
+            (section) =>
+              section.id !== input.id &&
+              normalizeTagSection(section.label) === nextLabel
+          );
+          if (duplicate) {
+            return current;
+          }
+
+          return {
+            ...current,
+            tagSections: current.tagSections
+              .map((section) =>
+                section.id === input.id
+                  ? normalizeTagSectionDefinition({
+                      ...section,
+                      label: nextLabel,
+                      color: input.color
+                    })
+                  : section
+              )
+              .sort((left, right) => left.label.localeCompare(right.label)),
+            tagsRegistry: current.tagsRegistry.map((definition) =>
+              normalizeTagSection(definition.section) === normalizeTagSection(target.label)
+                ? normalizeTagDefinition({
+                    ...definition,
+                    section: nextLabel,
+                    sectionColor: input.color,
+                    color: input.color
+                  })
+                : definition
+            ),
+            updates: [
+              makeUpdate(
+                "Tags",
+                `Section modifiee : ${target.label}`,
+                "Le nom ou la couleur de la section a ete mis a jour."
+              ),
+              ...current.updates
+            ]
+          };
+        });
+      },
+      deleteTagSection(id) {
+        setData((current) => {
+          const target = current.tagSections.find((section) => section.id === id);
+          if (!target) {
+            return current;
+          }
+
+          const isUsed = current.tagsRegistry.some(
+            (definition) =>
+              normalizeTagSection(definition.section) === normalizeTagSection(target.label)
+          );
+
+          if (isUsed) {
+            return {
+              ...current,
+              updates: [
+                makeUpdate(
+                  "Tags",
+                  `Suppression impossible : ${target.label}`,
+                  "La section contient encore des tags. Vide-la avant suppression."
+                ),
+                ...current.updates
+              ]
+            };
+          }
+
+          return {
+            ...current,
+            tagSections: current.tagSections.filter((section) => section.id !== id),
+            updates: [
+              makeUpdate(
+                "Tags",
+                `Section supprimee : ${target.label}`,
+                "La section vide a ete retiree."
+              ),
+              ...current.updates
+            ]
+          };
+        });
       },
       createTagDefinition(input) {
         const nextLabel = normalizeTagLabel(input.label);
