@@ -6,20 +6,9 @@ import { useRouter } from "next/navigation";
 import { useAppData } from "@/components/app-data-provider";
 import { CreatePanel } from "@/components/create-panel";
 import { PageHero } from "@/components/page-hero";
+import { TagBadge } from "@/components/tag-badge";
+import { TagPicker } from "@/components/tag-picker";
 import { formatDateLabel } from "@/lib/date-utils";
-
-const TIMELINE_TAGS = [
-  "temps-fort",
-  "orga",
-  "pj",
-  "pnj",
-  "logistique",
-  "rituel",
-  "brief",
-  "accueil",
-  "repas",
-  "nuit"
-];
 
 function buildQuarterSlots() {
   const slots: string[] = [];
@@ -394,18 +383,11 @@ export default function TimelinePage() {
               </div>
               <div className="field">
                 <label>Tags</label>
-                <div className="tag-picker">
-                  {TIMELINE_TAGS.map((tag) => (
-                    <button
-                      key={tag}
-                      type="button"
-                      className={`tag-toggle${selectedTags.includes(tag) ? " active" : ""}`}
-                      onClick={() => toggleTag(tag)}
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                </div>
+                <TagPicker
+                  definitions={data.tagsRegistry}
+                  selectedTags={selectedTags}
+                  onToggle={toggleTag}
+                />
               </div>
               <div className="form-actions">
                 <button type="submit" className="button-primary">
@@ -498,9 +480,7 @@ export default function TimelinePage() {
                   </div>
                   <div className="badge-row" style={{ marginTop: 12 }}>
                     {entry.tags.map((tag) => (
-                      <span className="badge" key={tag}>
-                        {tag}
-                      </span>
+                      <TagBadge key={tag} tag={tag} definitions={data.tagsRegistry} />
                     ))}
                   </div>
                   <div className="form-actions" style={{ marginTop: 14 }}>

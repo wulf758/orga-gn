@@ -8,6 +8,7 @@ import { useAppData } from "@/components/app-data-provider";
 import { CreatePanel } from "@/components/create-panel";
 import { PageHero } from "@/components/page-hero";
 import { StatusPill } from "@/components/status-pill";
+import { TagBadge } from "@/components/tag-badge";
 import { formatDateLabel, formatReminder } from "@/lib/date-utils";
 
 export default function OrganizationCategoryPage() {
@@ -143,6 +144,11 @@ export default function OrganizationCategoryPage() {
                   <span>{formatDateLabel(task.dueDate, task.dueLabel)}</span>
                   <span>{formatReminder(task.dueDate)}</span>
                   <StatusPill tone={task.status === "Bloque" ? "warning" : undefined}>{task.status}</StatusPill>
+                </div>
+                <div className="badge-row" style={{ marginTop: 12 }}>
+                  {task.tags.map((tag) => (
+                    <TagBadge key={tag} tag={tag} definitions={data.tagsRegistry} />
+                  ))}
                 </div>
               </Link>
             ))}

@@ -478,6 +478,12 @@ button:disabled,
   color: var(--accent-deep);
 }
 
+.tag-badge {
+  background: color-mix(in srgb, var(--tag-accent, var(--accent-deep)) 14%, white);
+  border: 1px solid color-mix(in srgb, var(--tag-accent, var(--accent-deep)) 28%, white);
+  color: var(--tag-accent, var(--accent-deep));
+}
+
 .status-pill.success {
   background: rgba(45, 106, 79, 0.14);
   color: var(--success);
@@ -599,9 +605,30 @@ button:disabled,
 }
 
 .tag-toggle.active {
-  background: var(--accent-soft);
-  color: var(--accent-deep);
-  border-color: rgba(142, 75, 43, 0.22);
+  background: color-mix(in srgb, var(--tag-accent, var(--accent-deep)) 14%, white);
+  color: var(--tag-accent, var(--accent-deep));
+  border-color: color-mix(in srgb, var(--tag-accent, var(--accent-deep)) 28%, white);
+}
+
+.tags-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.tag-registry-item {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: rgba(255, 252, 247, 0.9);
+}
+
+.tag-registry-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
 }
 
 .field input,

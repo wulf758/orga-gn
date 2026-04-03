@@ -8,21 +8,8 @@ import { useAppData } from "@/components/app-data-provider";
 import { CreatePanel } from "@/components/create-panel";
 import { PageHero } from "@/components/page-hero";
 import { RichTextPreview } from "@/components/rich-text-preview";
-
-const TAG_SUGGESTIONS = [
-  "brouillon",
-  "duches",
-  "politique",
-  "religion",
-  "geographie",
-  "histoire",
-  "pnj",
-  "pj",
-  "faction",
-  "intrigue",
-  "lieu",
-  "important"
-];
+import { TagBadge } from "@/components/tag-badge";
+import { TagPicker } from "@/components/tag-picker";
 
 export default function DocumentDetailPage() {
   const params = useParams<{ slug: string }>();
@@ -234,9 +221,7 @@ export default function DocumentDetailPage() {
                     </div>
                     <div className="badge-row" style={{ marginTop: 12 }}>
                       {entry.tags.map((tag) => (
-                        <span className="badge" key={tag}>
-                          {tag}
-                        </span>
+                        <TagBadge key={tag} tag={tag} definitions={data.tagsRegistry} />
                       ))}
                     </div>
                   </Link>
@@ -256,9 +241,7 @@ export default function DocumentDetailPage() {
                     </div>
                     <div className="badge-row" style={{ marginTop: 12 }}>
                       {entry.tags.map((tag) => (
-                        <span className="badge" key={tag}>
-                          {tag}
-                        </span>
+                        <TagBadge key={tag} tag={tag} definitions={data.tagsRegistry} />
                       ))}
                     </div>
                   </Link>
@@ -338,16 +321,14 @@ export default function DocumentDetailPage() {
                 <span>{currentDocument.updatedAt}</span>
               </div>
             </div>
-            <div className="detail-block">
-              <h3>Tags</h3>
-              <div className="badge-row" style={{ marginTop: 12 }}>
-                {currentDocument.tags.map((tag) => (
-                  <span className="badge" key={tag}>
-                    {tag}
-                  </span>
-                ))}
+              <div className="detail-block">
+                <h3>Tags</h3>
+                <div className="badge-row" style={{ marginTop: 12 }}>
+                  {currentDocument.tags.map((tag) => (
+                    <TagBadge key={tag} tag={tag} definitions={data.tagsRegistry} />
+                  ))}
+                </div>
               </div>
-            </div>
           </div>
         }
       />
@@ -399,22 +380,11 @@ export default function DocumentDetailPage() {
                 </div>
                 <div className="field">
                   <label>Tags</label>
-                  <div className="tag-picker">
-                    {TAG_SUGGESTIONS.map((tag) => {
-                      const isActive = selectedTags.includes(tag);
-
-                      return (
-                        <button
-                          key={tag}
-                          type="button"
-                          className={`tag-toggle${isActive ? " active" : ""}`}
-                          onClick={() => toggleTag(tag)}
-                        >
-                          {tag}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <TagPicker
+                    definitions={data.tagsRegistry}
+                    selectedTags={selectedTags}
+                    onToggle={toggleTag}
+                  />
                 </div>
                 <div className="field">
                   <label htmlFor="note-edit-content">Contenu</label>
@@ -497,9 +467,7 @@ export default function DocumentDetailPage() {
             <h3>Tags</h3>
             <div className="badge-row" style={{ marginTop: 12 }}>
               {currentDocument.tags.map((tag) => (
-                <span className="badge" key={tag}>
-                  {tag}
-                </span>
+                <TagBadge key={tag} tag={tag} definitions={data.tagsRegistry} />
               ))}
             </div>
           </div>

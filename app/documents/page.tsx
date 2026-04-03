@@ -6,6 +6,7 @@ import { FormEvent, useState } from "react";
 import { useAppData } from "@/components/app-data-provider";
 import { CreatePanel } from "@/components/create-panel";
 import { PageHero } from "@/components/page-hero";
+import { TagBadge } from "@/components/tag-badge";
 
 export default function DocumentsPage() {
   const { data, createDocument } = useAppData();
@@ -113,9 +114,7 @@ export default function DocumentsPage() {
                 </div>
                 <div className="badge-row" style={{ marginTop: 12 }}>
                   {folder.tags.map((tag) => (
-                    <span className="badge" key={tag}>
-                      {tag}
-                    </span>
+                    <TagBadge key={tag} tag={tag} definitions={data.tagsRegistry} />
                   ))}
                 </div>
               </Link>

@@ -24,11 +24,13 @@ import {
   Task,
   TimelineDay,
   TimelineEntry,
+  TagDefinition,
   UpdateEntry,
   WorkspaceCategory,
   WorkspaceSummary
 } from "@/lib/types";
 import { formatDateLabel, formatDateTimeLabel } from "@/lib/date-utils";
+import { getMergedTagDefinitions, normalizeTagDefinition, normalizeTagLabel } from "@/lib/tags";
 
 type GameRecord = WorkspaceSummary;
 
@@ -247,6 +249,19 @@ type UpdateCategoryInput = {
   summary: string;
 };
 
+type CreateTagDefinitionInput = {
+  label: string;
+  color: string;
+  description?: string;
+};
+
+type UpdateTagDefinitionInput = {
+  id: string;
+  label: string;
+  color: string;
+  description?: string;
+};
+
 type AppDataContextValue = {
   isReady: boolean;
   isAdminSession: boolean;
@@ -271,6 +286,9 @@ type AppDataContextValue = {
   createCategory: (input: CreateCategoryInput) => void;
   updateCategory: (input: UpdateCategoryInput) => void;
   deleteCategory: (section: CategorySection, slug: string) => void;
+  createTagDefinition: (input: CreateTagDefinitionInput) => void;
+  updateTagDefinition: (input: UpdateTagDefinitionInput) => void;
+  deleteTagDefinition: (id: string) => void;
   createCharacter: (input: CreateCharacterInput) => void;
   updateCharacter: (input: UpdateCharacterInput) => void;
   deleteCharacter: (id: string) => void;
@@ -327,6 +345,16 @@ function makeCategory(section: CategorySection, title: string, summary: string):
     updatedAt: "A l'instant",
     tags: [section]
   };
+}
+
+function renameTagInList(tags: string[], previousLabel: string, nextLabel: string) {
+  return Array.from(
+    new Set(
+      tags.map((tag) =>
+        normalizeTagLabel(tag) === normalizeTagLabel(previousLabel) ? nextLabel : tag
+      )
+    )
+  );
 }
 
 function makeStoryboardCards(count: number, existingCards: StoryboardCard[] = []) {
@@ -405,6 +433,11 @@ function normalizeAppData(parsed?: Partial<AppData> | null, fallbackName?: strin
       typeof parsed?.gameName === "string" && parsed.gameName.trim()
         ? parsed.gameName
         : fallbackName || initialData.gameName,
+    tagsRegistry: getMergedTagDefinitions(parsed?.tagsRegistry),
+    documents: (parsed?.documents ?? initialData.documents).map((document) => ({
+      ...document,
+      tags: document.tags ?? []
+    })),
     characters: (parsed?.characters ?? initialData.characters).map((character) => ({
       ...character,
       background: character.background ?? character.pitch ?? "",
@@ -447,15 +480,27 @@ function normalizeAppData(parsed?: Partial<AppData> | null, fallbackName?: strin
       notes: meeting.notes ?? meeting.focus ?? "",
       tags: meeting.tags ?? ["brouillon"]
     })),
-    plotCategories: parsed?.plotCategories ?? initialData.plotCategories,
+    plotCategories: (parsed?.plotCategories ?? initialData.plotCategories).map((category) => ({
+      ...category,
+      tags: category.tags ?? []
+    })),
     organizationCategories:
-      parsed?.organizationCategories ?? initialData.organizationCategories,
-    meetingCategories: parsed?.meetingCategories ?? initialData.meetingCategories,
+      (parsed?.organizationCategories ?? initialData.organizationCategories).map((category) => ({
+        ...category,
+        tags: category.tags ?? []
+      })),
+    meetingCategories: (parsed?.meetingCategories ?? initialData.meetingCategories).map(
+      (category) => ({
+        ...category,
+        tags: category.tags ?? []
+      })
+    ),
     timelineDays: (parsed?.timelineDays ?? initialData.timelineDays)
       .slice()
       .sort((left, right) => left.order - right.order),
     timelineEntries: (parsed?.timelineEntries ?? initialData.timelineEntries).map((entry) => ({
       ...entry,
+      tags: entry.tags ?? [],
       storyboardSceneId: entry.storyboardSceneId
     })),
     storyboardScenes: (parsed?.storyboardScenes ?? initialData.storyboardScenes).map((scene) =>
@@ -1182,6 +1227,175 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             ...current.updates
           ]
         }));
+      },
+      createTagDefinition(input) {
+        const nextLabel = normalizeTagLabel(input.label);
+        if (!nextLabel) return;
+
+        setData((current) => {
+          const existing = current.tagsRegistry.find(
+            (definition) => normalizeTagLabel(definition.label) === nextLabel
+          );
+
+          if (existing) {
+            return current;
+          }
+
+          const definition = normalizeTagDefinition({
+            id: `tag-${slugify(nextLabel) || Date.now().toString()}`,
+            label: nextLabel,
+            color: input.color,
+            description: input.description
+          });
+
+          return {
+            ...current,
+            tagsRegistry: [...current.tagsRegistry, definition].sort((left, right) =>
+              left.label.localeCompare(right.label)
+            ),
+            updates: [
+              makeUpdate(
+                "Tags",
+                `Tag ajoute : ${definition.label}`,
+                "Le lexique commun des tags a ete enrichi."
+              ),
+              ...current.updates
+            ]
+          };
+        });
+      },
+      updateTagDefinition(input) {
+        const nextLabel = normalizeTagLabel(input.label);
+        if (!nextLabel) return;
+
+        setData((current) => {
+          const target = current.tagsRegistry.find((definition) => definition.id === input.id);
+          if (!target) {
+            return current;
+          }
+
+          const duplicate = current.tagsRegistry.find(
+            (definition) =>
+              definition.id !== input.id &&
+              normalizeTagLabel(definition.label) === nextLabel
+          );
+
+          if (duplicate) {
+            return current;
+          }
+
+          return {
+            ...current,
+            tagsRegistry: current.tagsRegistry
+              .map((definition) =>
+                definition.id === input.id
+                  ? normalizeTagDefinition({
+                      ...definition,
+                      label: nextLabel,
+                      color: input.color,
+                      description: input.description
+                    })
+                  : definition
+              )
+              .sort((left, right) => left.label.localeCompare(right.label)),
+            documents: current.documents.map((document) => ({
+              ...document,
+              tags: renameTagInList(document.tags, target.label, nextLabel)
+            })),
+            plotCategories: current.plotCategories.map((category) => ({
+              ...category,
+              tags: renameTagInList(category.tags, target.label, nextLabel)
+            })),
+            plots: current.plots.map((plot) => ({
+              ...plot,
+              tags: renameTagInList(plot.tags, target.label, nextLabel)
+            })),
+            organizationCategories: current.organizationCategories.map((category) => ({
+              ...category,
+              tags: renameTagInList(category.tags, target.label, nextLabel)
+            })),
+            tasks: current.tasks.map((task) => ({
+              ...task,
+              tags: renameTagInList(task.tags, target.label, nextLabel)
+            })),
+            meetingCategories: current.meetingCategories.map((category) => ({
+              ...category,
+              tags: renameTagInList(category.tags, target.label, nextLabel)
+            })),
+            meetings: current.meetings.map((meeting) => ({
+              ...meeting,
+              tags: renameTagInList(meeting.tags, target.label, nextLabel)
+            })),
+            timelineEntries: current.timelineEntries.map((entry) => ({
+              ...entry,
+              tags: renameTagInList(entry.tags, target.label, nextLabel)
+            })),
+            updates: [
+              makeUpdate(
+                "Tags",
+                `Tag modifie : ${target.label} -> ${nextLabel}`,
+                "Le nom du tag a ete mis a jour dans tout le GN."
+              ),
+              ...current.updates
+            ]
+          };
+        });
+      },
+      deleteTagDefinition(id) {
+        setData((current) => {
+          const target = current.tagsRegistry.find((definition) => definition.id === id);
+          if (!target) {
+            return current;
+          }
+
+          const removeFromList = (tags: string[]) =>
+            tags.filter((tag) => normalizeTagLabel(tag) !== normalizeTagLabel(target.label));
+
+          return {
+            ...current,
+            tagsRegistry: current.tagsRegistry.filter((definition) => definition.id !== id),
+            documents: current.documents.map((document) => ({
+              ...document,
+              tags: removeFromList(document.tags)
+            })),
+            plotCategories: current.plotCategories.map((category) => ({
+              ...category,
+              tags: removeFromList(category.tags)
+            })),
+            plots: current.plots.map((plot) => ({
+              ...plot,
+              tags: removeFromList(plot.tags)
+            })),
+            organizationCategories: current.organizationCategories.map((category) => ({
+              ...category,
+              tags: removeFromList(category.tags)
+            })),
+            tasks: current.tasks.map((task) => ({
+              ...task,
+              tags: removeFromList(task.tags)
+            })),
+            meetingCategories: current.meetingCategories.map((category) => ({
+              ...category,
+              tags: removeFromList(category.tags)
+            })),
+            meetings: current.meetings.map((meeting) => ({
+              ...meeting,
+              tags: removeFromList(meeting.tags)
+            })),
+            timelineEntries: current.timelineEntries.map((entry) => ({
+              ...entry,
+              tags: removeFromList(entry.tags)
+            })),
+            updates: [
+              makeUpdate(
+                "Tags",
+                `Tag supprime : ${target.label}`,
+                "Le tag a ete retire du registre et des fiches qui l'utilisaient."
+              ),
+              ...current.updates
+            ]
+          };
+        });
       },
       createCharacter(input) {
         const id = `${slugify(input.name) || "personnage"}-${Date.now()

@@ -4,6 +4,13 @@ export type NavItem = {
   description: string;
 };
 
+export type TagDefinition = {
+  id: string;
+  label: string;
+  color: string;
+  description?: string;
+};
+
 export type DocumentPage = {
   slug: string;
   kind: "folder" | "note";
@@ -148,6 +155,7 @@ export type KraftItem = {
 
 export type AppData = {
   gameName: string;
+  tagsRegistry: TagDefinition[];
   documents: DocumentPage[];
   characters: Character[];
   plotCategories: WorkspaceCategory[];

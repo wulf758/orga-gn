@@ -8,6 +8,7 @@ import { useAppData } from "@/components/app-data-provider";
 import { CreatePanel } from "@/components/create-panel";
 import { PageHero } from "@/components/page-hero";
 import { StatusPill } from "@/components/status-pill";
+import { TagBadge } from "@/components/tag-badge";
 
 export default function PlotCategoryPage() {
   const params = useParams<{ slug: string }>();
@@ -104,6 +105,11 @@ export default function PlotCategoryPage() {
                     {plot.stage}
                   </StatusPill>
                   <span>{plot.characters.length} personnage(s)</span>
+                </div>
+                <div className="badge-row" style={{ marginTop: 12 }}>
+                  {plot.tags.map((tag) => (
+                    <TagBadge key={tag} tag={tag} definitions={data.tagsRegistry} />
+                  ))}
                 </div>
               </Link>
             ))}

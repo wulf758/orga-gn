@@ -7,6 +7,7 @@ import { FormEvent, useState } from "react";
 import { useAppData } from "@/components/app-data-provider";
 import { CreatePanel } from "@/components/create-panel";
 import { PageHero } from "@/components/page-hero";
+import { TagBadge } from "@/components/tag-badge";
 import { formatDateTimeLabel } from "@/lib/date-utils";
 
 export default function MeetingCategoryPage() {
@@ -107,6 +108,11 @@ export default function MeetingCategoryPage() {
                 <p>{meeting.focus}</p>
                 <div className="meta-line">
                   <span>{formatDateTimeLabel(meeting.dateISO, meeting.timeLabel, meeting.dateLabel)}</span>
+                </div>
+                <div className="badge-row" style={{ marginTop: 12 }}>
+                  {meeting.tags.map((tag) => (
+                    <TagBadge key={tag} tag={tag} definitions={data.tagsRegistry} />
+                  ))}
                 </div>
                 {meeting.agenda.length ? (
                   <ul>

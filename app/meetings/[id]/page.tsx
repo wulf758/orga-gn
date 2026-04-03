@@ -7,20 +7,9 @@ import { FormEvent, useRef, useState } from "react";
 import { useAppData } from "@/components/app-data-provider";
 import { PageHero } from "@/components/page-hero";
 import { RichTextPreview } from "@/components/rich-text-preview";
+import { TagBadge } from "@/components/tag-badge";
+import { TagPicker } from "@/components/tag-picker";
 import { formatDateTimeLabel } from "@/lib/date-utils";
-
-const MEETING_TAG_SUGGESTIONS = [
-  "scenario",
-  "logistique",
-  "arbitrage",
-  "relecture",
-  "compte-rendu",
-  "urgent",
-  "validation",
-  "production",
-  "planning",
-  "decision"
-];
 
 export default function MeetingDetailPage() {
   const params = useParams<{ id: string }>();
@@ -122,7 +111,7 @@ export default function MeetingDetailPage() {
               <h3>Tags</h3>
               <div className="badge-row" style={{ marginTop: 12 }}>
                 {currentMeeting.tags.map((tag) => (
-                  <span className="badge" key={tag}>{tag}</span>
+                  <TagBadge key={tag} tag={tag} definitions={data.tagsRegistry} />
                 ))}
               </div>
             </div>
@@ -160,13 +149,11 @@ export default function MeetingDetailPage() {
                 </div>
                 <div className="field">
                   <label>Tags</label>
-                  <div className="tag-picker">
-                    {MEETING_TAG_SUGGESTIONS.map((tag) => (
-                      <button key={tag} type="button" className={`tag-toggle${selectedTags.includes(tag) ? " active" : ""}`} onClick={() => toggleTag(tag)}>
-                        {tag}
-                      </button>
-                    ))}
-                  </div>
+                  <TagPicker
+                    definitions={data.tagsRegistry}
+                    selectedTags={selectedTags}
+                    onToggle={toggleTag}
+                  />
                 </div>
                 <div className="field">
                   <label htmlFor="meeting-edit-agenda">Ordre du jour</label>

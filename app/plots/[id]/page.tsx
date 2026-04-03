@@ -8,21 +8,8 @@ import { useAppData } from "@/components/app-data-provider";
 import { PageHero } from "@/components/page-hero";
 import { RichTextPreview } from "@/components/rich-text-preview";
 import { StatusPill } from "@/components/status-pill";
-
-const PLOT_TAG_SUGGESTIONS = [
-  "politique",
-  "mystere",
-  "rituel",
-  "quete",
-  "ordre",
-  "maladie",
-  "secret",
-  "revelation",
-  "conflit",
-  "alliance",
-  "urgence",
-  "logistique"
-];
+import { TagBadge } from "@/components/tag-badge";
+import { TagPicker } from "@/components/tag-picker";
 
 export default function PlotDetailPage() {
   const params = useParams<{ id: string }>();
@@ -141,9 +128,7 @@ export default function PlotDetailPage() {
               <h3>Tags</h3>
               <div className="badge-row" style={{ marginTop: 12 }}>
                 {currentPlot.tags.map((tag) => (
-                  <span className="badge" key={tag}>
-                    {tag}
-                  </span>
+                  <TagBadge key={tag} tag={tag} definitions={data.tagsRegistry} />
                 ))}
               </div>
             </div>
@@ -185,21 +170,11 @@ export default function PlotDetailPage() {
                 </div>
                 <div className="field">
                   <label>Tags</label>
-                  <div className="tag-picker">
-                    {PLOT_TAG_SUGGESTIONS.map((tag) => {
-                      const isActive = selectedTags.includes(tag);
-                      return (
-                        <button
-                          key={tag}
-                          type="button"
-                          className={`tag-toggle${isActive ? " active" : ""}`}
-                          onClick={() => toggleTag(tag)}
-                        >
-                          {tag}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <TagPicker
+                    definitions={data.tagsRegistry}
+                    selectedTags={selectedTags}
+                    onToggle={toggleTag}
+                  />
                 </div>
                 <div className="field">
                   <label htmlFor="plot-edit-content">Contenu</label>

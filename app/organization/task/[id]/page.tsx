@@ -8,20 +8,9 @@ import { useAppData } from "@/components/app-data-provider";
 import { PageHero } from "@/components/page-hero";
 import { RichTextPreview } from "@/components/rich-text-preview";
 import { StatusPill } from "@/components/status-pill";
+import { TagBadge } from "@/components/tag-badge";
+import { TagPicker } from "@/components/tag-picker";
 import { formatDateLabel, formatReminder } from "@/lib/date-utils";
-
-const TASK_TAG_SUGGESTIONS = [
-  "prioritaire",
-  "relecture",
-  "orga",
-  "materiel",
-  "terrain",
-  "costume",
-  "budget",
-  "suivi",
-  "compte-rendu",
-  "urgent"
-];
 
 export default function OrganizationTaskDetailPage() {
   const params = useParams<{ id: string }>();
@@ -132,7 +121,7 @@ export default function OrganizationTaskDetailPage() {
               <h3>Tags</h3>
               <div className="badge-row" style={{ marginTop: 12 }}>
                 {currentTask.tags.map((tag) => (
-                  <span className="badge" key={tag}>{tag}</span>
+                  <TagBadge key={tag} tag={tag} definitions={data.tagsRegistry} />
                 ))}
               </div>
             </div>
@@ -180,13 +169,11 @@ export default function OrganizationTaskDetailPage() {
                 </div>
                 <div className="field">
                   <label>Tags</label>
-                  <div className="tag-picker">
-                    {TASK_TAG_SUGGESTIONS.map((tag) => (
-                      <button key={tag} type="button" className={`tag-toggle${selectedTags.includes(tag) ? " active" : ""}`} onClick={() => toggleTag(tag)}>
-                        {tag}
-                      </button>
-                    ))}
-                  </div>
+                  <TagPicker
+                    definitions={data.tagsRegistry}
+                    selectedTags={selectedTags}
+                    onToggle={toggleTag}
+                  />
                 </div>
                 <div className="field">
                   <label htmlFor="task-edit-content">Contenu</label>

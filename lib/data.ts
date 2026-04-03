@@ -14,6 +14,7 @@ import {
   UpdateEntry,
   WorkspaceCategory
 } from "@/lib/types";
+import { DEFAULT_TAG_DEFINITIONS } from "@/lib/tags";
 
 export const gameName = "Le Songe du Lion";
 
@@ -62,6 +63,11 @@ export const navigation: NavItem[] = [
     href: "/kraft",
     label: "Kraft",
     description: "Suivi des fabrications, pieces en cours et elements termines"
+  },
+  {
+    href: "/tags",
+    label: "Tags",
+    description: "Lexique commun, couleurs et priorites transversales"
   },
   {
     href: "/export",
@@ -728,6 +734,7 @@ export const kraftItems: KraftItem[] = [
 export function getInitialAppData(): AppData {
   return {
     gameName,
+    tagsRegistry: structuredClone(DEFAULT_TAG_DEFINITIONS),
     documents: structuredClone(documents),
     characters: structuredClone(characters),
     plotCategories: structuredClone(plotCategories),
@@ -748,6 +755,7 @@ export function getInitialAppData(): AppData {
 export function getEmptyAppData(name = "Nouveau GN"): AppData {
   return {
     gameName: name,
+    tagsRegistry: structuredClone(DEFAULT_TAG_DEFINITIONS),
     documents: [],
     characters: [],
     plotCategories: [],

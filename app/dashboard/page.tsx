@@ -5,6 +5,7 @@ import Link from "next/link";
 import { DeadlineCalendar } from "@/components/deadline-calendar";
 import { PageHero } from "@/components/page-hero";
 import { StatusPill } from "@/components/status-pill";
+import { TagBadge } from "@/components/tag-badge";
 import { useAppData } from "@/components/app-data-provider";
 import {
   daysUntil,
@@ -12,6 +13,7 @@ import {
   formatDateTimeLabel,
   formatReminder
 } from "@/lib/date-utils";
+import { isPriorityTag } from "@/lib/tags";
 
 export default function DashboardPage() {
   const { data } = useAppData();
@@ -21,6 +23,53 @@ export default function DashboardPage() {
   const playerCharacterCount = data.characters.filter((entry) => entry.role === "PJ").length;
   const openKraftCount = data.kraftItems.filter((entry) => entry.status !== "Fini").length;
   const finishedKraftCount = data.kraftItems.filter((entry) => entry.status === "Fini").length;
+  const priorityItems = [
+    ...data.documents
+      .filter((document) => document.tags.some(isPriorityTag))
+      .map((document) => ({
+        id: `priority-document-${document.slug}`,
+        title: document.title,
+        summary: document.summary,
+        area: "Document",
+        href: `/documents/${document.slug}`
+      })),
+    ...data.plots
+      .filter((plot) => plot.tags.some(isPriorityTag))
+      .map((plot) => ({
+        id: `priority-plot-${plot.id}`,
+        title: plot.title,
+        summary: plot.summary,
+        area: "Intrigue",
+        href: `/plots/${plot.id}`
+      })),
+    ...data.tasks
+      .filter((task) => task.tags.some(isPriorityTag))
+      .map((task) => ({
+        id: `priority-task-${task.id}`,
+        title: task.title,
+        summary: task.summary,
+        area: "Organisation",
+        href: `/organization/task/${task.id}`
+      })),
+    ...data.meetings
+      .filter((meeting) => meeting.tags.some(isPriorityTag))
+      .map((meeting) => ({
+        id: `priority-meeting-${meeting.id}`,
+        title: meeting.title,
+        summary: meeting.focus,
+        area: "Reunion",
+        href: `/meetings/${meeting.id}`
+      })),
+    ...data.timelineEntries
+      .filter((entry) => entry.tags.some(isPriorityTag))
+      .map((entry) => ({
+        id: `priority-timeline-${entry.id}`,
+        title: entry.title,
+        summary: `${entry.startTime} - ${entry.endTime} - ${entry.location}`,
+        area: "Timeline",
+        href: "/timeline"
+      }))
+  ].slice(0, 8);
   const upcomingReminders = [
     ...data.tasks
       .filter((task) => task.dueDate)
@@ -171,6 +220,36 @@ export default function DashboardPage() {
       />
 
       <section className="surface-grid">
+        <div className="surface span-5">
+          <div className="section-header">
+            <div>
+              <p className="section-kicker">Priorites</p>
+              <h2 className="section-title">Sujets prioritaires</h2>
+            </div>
+            <Link href="/tags" className="chip">
+              Gerer les tags
+            </Link>
+          </div>
+          <div className="list-stack">
+            {priorityItems.length ? (
+              priorityItems.map((item) => (
+                <Link href={item.href} className="list-item" key={item.id}>
+                  <h3>{item.title}</h3>
+                  <p>{item.summary}</p>
+                  <div className="meta-line">
+                    <span>{item.area}</span>
+                    <TagBadge tag="prioritaire" definitions={data.tagsRegistry} />
+                  </div>
+                </Link>
+              ))
+            ) : (
+              <div className="empty-state">
+                Aucun element tagge prioritaire pour l'instant.
+              </div>
+            )}
+          </div>
+        </div>
+
         <div className="surface span-5">
           <div className="section-header">
             <div>
