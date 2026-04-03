@@ -236,30 +236,12 @@ export default function TagsPage() {
                   </select>
                 </div>
                 <div className="field">
-                  <label htmlFor="tag-section-color">Couleur de section</label>
-                  <input
-                    id="tag-section-color"
-                    type="color"
-                    value={sectionColor}
-                    onChange={(event) => setSectionColor(event.target.value)}
-                  />
-                </div>
-                <div className="field">
                   <label htmlFor="tag-label">Nom du tag</label>
                   <input
                     id="tag-label"
                     value={label}
                     onChange={(event) => setLabel(event.target.value)}
                     placeholder="Exemple : prioritaire"
-                  />
-                </div>
-                <div className="field">
-                  <label htmlFor="tag-description">Description</label>
-                  <textarea
-                    id="tag-description"
-                    value={description}
-                    onChange={(event) => setDescription(event.target.value)}
-                    placeholder="A quoi sert ce tag dans l'equipe ?"
                   />
                 </div>
                 <div className="form-actions">
