@@ -68,6 +68,15 @@ export default function DashboardPage() {
         summary: `${entry.startTime} - ${entry.endTime} - ${entry.location}`,
         area: "Timeline",
         href: "/timeline"
+      })),
+    ...data.kraftItems
+      .filter((item) => item.tags.some(isPriorityTag))
+      .map((item) => ({
+        id: `priority-kraft-${item.id}`,
+        title: item.title,
+        summary: item.summary,
+        area: "Kraft",
+        href: `/kraft/${item.id}`
       }))
   ].slice(0, 8);
   const upcomingReminders = [
