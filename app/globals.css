@@ -9,6 +9,7 @@
   --accent-deep: #51230f;
   --success: #2d6a4f;
   --warning: #9c6b22;
+  --ring: rgba(142, 75, 43, 0.24);
   --shadow: 0 18px 45px rgba(54, 33, 12, 0.12);
   --radius-xl: 28px;
   --radius-lg: 20px;
@@ -35,6 +36,8 @@ body {
     linear-gradient(180deg, #f8f4ec 0%, #f1ebdf 100%);
   color: var(--text);
   font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 a {
@@ -110,6 +113,7 @@ select {
   font-family: var(--serif);
   font-size: 2rem;
   line-height: 1.02;
+  text-wrap: balance;
 }
 
 .brand-title-row {
@@ -284,6 +288,7 @@ select {
   font-family: var(--serif);
   font-size: clamp(2.1rem, 3vw, 3.6rem);
   line-height: 0.98;
+  text-wrap: balance;
 }
 
 .section-title {
@@ -296,6 +301,7 @@ select {
   max-width: 60ch;
   line-height: 1.65;
   color: rgba(255, 248, 240, 0.8);
+  text-wrap: pretty;
 }
 
 .section-copy {
@@ -315,6 +321,7 @@ select {
 
 .button-primary,
 .button-secondary,
+.button-secondary-light,
 .button-ghost,
 .button-danger {
   display: inline-flex;
@@ -327,6 +334,13 @@ select {
   font-weight: 600;
   cursor: pointer;
   border: none;
+  touch-action: manipulation;
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease,
+    background-color 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease;
 }
 
 .button-primary {
@@ -360,11 +374,74 @@ select {
 button:disabled,
 .button-primary:disabled,
 .button-secondary:disabled,
+.button-secondary-light:disabled,
 .button-ghost:disabled,
 .button-danger:disabled,
 .sidebar-ghost-button:disabled {
   opacity: 0.58;
   cursor: not-allowed;
+}
+
+.button-primary:hover,
+.button-secondary:hover,
+.button-secondary-light:hover,
+.button-ghost:hover,
+.button-danger:hover,
+.sidebar-ghost-button:hover,
+.editor-button:hover,
+.tag-toggle:hover,
+.timeline-day-button:hover,
+.timeline-event:hover,
+.workspace-card:hover,
+a.list-item:hover {
+  transform: translateY(-1px);
+}
+
+.button-primary:focus-visible,
+.button-secondary:focus-visible,
+.button-secondary-light:focus-visible,
+.button-ghost:focus-visible,
+.button-danger:focus-visible,
+.sidebar-ghost-button:focus-visible,
+.brand-settings-button:focus-visible,
+.editor-button:focus-visible,
+.tag-toggle:focus-visible,
+.timeline-day-button:focus-visible,
+.timeline-event:focus-visible,
+.workspace-card:focus-visible,
+a.list-item:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.button-primary:hover,
+.button-primary:focus-visible,
+.button-secondary:hover,
+.button-secondary:focus-visible,
+.button-secondary-light:hover,
+.button-secondary-light:focus-visible,
+.button-ghost:hover,
+.button-ghost:focus-visible,
+.button-danger:hover,
+.button-danger:focus-visible,
+.sidebar-ghost-button:hover,
+.sidebar-ghost-button:focus-visible,
+.editor-button:hover,
+.editor-button:focus-visible,
+.tag-toggle:hover,
+.tag-toggle:focus-visible,
+.timeline-day-button:hover,
+.timeline-day-button:focus-visible,
+.timeline-event:hover,
+.timeline-event:focus-visible,
+.workspace-card:hover,
+.workspace-card:focus-visible,
+a.list-item:hover,
+a.list-item:focus-visible {
+  box-shadow: 0 12px 28px rgba(54, 33, 12, 0.1);
 }
 
 .insight-column {
@@ -562,6 +639,7 @@ button:disabled,
   margin: 10px 0 0;
   color: var(--muted);
   line-height: 1.6;
+  text-wrap: pretty;
 }
 
 .meta-line {
@@ -801,6 +879,7 @@ button:disabled,
   background: #fffdf8;
   border: 1px solid var(--line);
   color: var(--text);
+  cursor: pointer;
 }
 
 .editor-content {
@@ -1079,6 +1158,25 @@ button:disabled,
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+}
+
+.hero-note {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 248, 240, 0.18);
+  background: rgba(255, 248, 240, 0.08);
+  color: #fff8f0;
+  font-weight: 600;
+}
+
+.hero-note-accent {
+  background: #fff8f0;
+  border-color: transparent;
+  color: var(--accent-deep);
 }
 
 .timeline-day-list {

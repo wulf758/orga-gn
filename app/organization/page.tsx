@@ -32,8 +32,8 @@ export default function OrganizationPage() {
         copy="L'entree Organisation affiche d'abord les categories. Chaque categorie ouvre ensuite sur ses taches, ses echeances et son planning."
         actions={
           <>
-            <span className="button-primary">Vue categories active</span>
-            <span className="button-secondary">Suppression confirmee</span>
+            <span className="hero-note hero-note-accent">Vue categories active</span>
+            <span className="hero-note">Suppression confirmee</span>
           </>
         }
         aside={

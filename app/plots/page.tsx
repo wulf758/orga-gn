@@ -34,8 +34,8 @@ export default function PlotsPage() {
         copy="Chaque intrigue racine sert d'espace de travail principal. Son contenu regroupe ensuite les fiches, les jalons et les elements lies."
         actions={
           <>
-            <span className="button-primary">Vue intrigues active</span>
-            <span className="button-secondary">Suppression confirmee</span>
+            <span className="hero-note hero-note-accent">Vue intrigues active</span>
+            <span className="hero-note">Suppression confirmee</span>
           </>
         }
         aside={

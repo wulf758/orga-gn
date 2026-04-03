@@ -182,8 +182,8 @@ function StoryboardPageContent() {
         copy="Chaque scene du storyboard porte son horaire, son lieu et ses cases d'ecriture. Une scene posee ici remonte automatiquement dans la timeline et reste consultable depuis son bloc horaire."
         actions={
           <>
-            <span className="button-primary">Scenes reliees au planning</span>
-            <span className="button-secondary">Cases de 1 a 9 moments</span>
+            <span className="hero-note hero-note-accent">Scenes reliees au planning</span>
+            <span className="hero-note">Cases de 1 a 9 moments</span>
           </>
         }
         aside={

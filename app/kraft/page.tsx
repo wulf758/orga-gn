@@ -36,7 +36,7 @@ export default function KraftPage() {
             <Link href="/kraft/new" className="button-primary">
               Creer un kraft
             </Link>
-            <span className="button-secondary">Tags d'avancement visibles</span>
+            <span className="hero-note">Tags d'avancement visibles</span>
           </>
         }
         aside={

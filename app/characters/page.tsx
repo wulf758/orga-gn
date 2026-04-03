@@ -26,7 +26,7 @@ export default function CharactersPage() {
             <Link href="/characters/new" className="button-primary">
               Creer un personnage
             </Link>
-            <span className="button-secondary">PJ et PNJ separes</span>
+            <span className="hero-note">PJ et PNJ separes</span>
           </>
         }
         aside={

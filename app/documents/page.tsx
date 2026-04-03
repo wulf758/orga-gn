@@ -44,8 +44,8 @@ export default function DocumentsPage() {
         copy="L'entree Documents affiche maintenant seulement les dossiers racine. Chaque dossier devient un espace sectorise avec ses propres notes, sous-dossiers et actions."
         actions={
           <>
-            <span className="button-primary">Vue dossiers active</span>
-            <span className="button-secondary">Suppression confirmee</span>
+            <span className="hero-note hero-note-accent">Vue dossiers active</span>
+            <span className="hero-note">Suppression confirmee</span>
           </>
         }
         aside={

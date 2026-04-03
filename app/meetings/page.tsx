@@ -32,8 +32,8 @@ export default function MeetingsPage() {
         copy="L'entree Reunion orga affiche les categories de reunion. Chaque categorie ouvre ensuite sur les seances prevues et leur suivi."
         actions={
           <>
-            <span className="button-primary">Vue categories active</span>
-            <span className="button-secondary">Suppression confirmee</span>
+            <span className="hero-note hero-note-accent">Vue categories active</span>
+            <span className="hero-note">Suppression confirmee</span>
           </>
         }
         aside={

@@ -228,8 +228,8 @@ export default function TimelinePage() {
         copy="Cette timeline permet de poser les temps forts, les passages logistiques et les sequences sensibles au quart d'heure sur toute la duree du GN."
         actions={
           <>
-            <span className="button-primary">Planning au quart d'heure</span>
-            <span className="button-secondary">Pilotage multi-jours</span>
+            <span className="hero-note hero-note-accent">Planning au quart d'heure</span>
+            <span className="hero-note">Pilotage multi-jours</span>
           </>
         }
         aside={

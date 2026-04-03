@@ -141,7 +141,7 @@ export default function TagSearchPage() {
         actions={
           <>
             <TagBadge tag={displayTag} definitions={data.tagsRegistry} />
-            <span className="button-secondary">{totalResults} resultat(s)</span>
+            <span className="hero-note">{totalResults} resultat(s)</span>
             <Link href="/tags" className="button-primary">
               Retour aux tags
             </Link>

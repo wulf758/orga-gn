@@ -159,8 +159,8 @@ export default function TagsPage() {
         copy="Chaque tag appartient maintenant a une section comme personnages, PNJ, intrigues ou kraft. On garde un lexique commun, mais classe de facon beaucoup plus lisible."
         actions={
           <>
-            <span className="button-primary">Tags coordonnes</span>
-            <span className="button-secondary">Base pour la recherche transverse</span>
+            <span className="hero-note hero-note-accent">Tags coordonnes</span>
+            <span className="hero-note">Base pour la recherche transverse</span>
           </>
         }
         aside={

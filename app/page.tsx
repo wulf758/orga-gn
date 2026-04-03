@@ -292,7 +292,7 @@ export default function HomePage() {
               Reprendre {currentGame.name}
             </button>
           ) : (
-            <span className="button-primary">Creation protegee</span>
+            <span className="hero-note hero-note-accent">Creation protegee</span>
           )
         }
         aside={
