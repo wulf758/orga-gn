@@ -33,6 +33,24 @@ export default function DashboardPage() {
         area: "Document",
         href: `/documents/${document.slug}`
       })),
+    ...data.characters
+      .filter((character) => character.tags.some(isPriorityTag))
+      .map((character) => ({
+        id: `priority-character-${character.id}`,
+        title: character.name,
+        summary: character.background,
+        area: "Personnage",
+        href: `/characters/${character.id}`
+      })),
+    ...data.plotCategories
+      .filter((category) => category.tags.some(isPriorityTag))
+      .map((category) => ({
+        id: `priority-plot-category-${category.slug}`,
+        title: category.title,
+        summary: category.summary,
+        area: "Categorie intrigue",
+        href: `/plots/category/${category.slug}`
+      })),
     ...data.plots
       .filter((plot) => plot.tags.some(isPriorityTag))
       .map((plot) => ({
@@ -42,6 +60,15 @@ export default function DashboardPage() {
         area: "Intrigue",
         href: `/plots/${plot.id}`
       })),
+    ...data.organizationCategories
+      .filter((category) => category.tags.some(isPriorityTag))
+      .map((category) => ({
+        id: `priority-organization-category-${category.slug}`,
+        title: category.title,
+        summary: category.summary,
+        area: "Categorie organisation",
+        href: `/organization/category/${category.slug}`
+      })),
     ...data.tasks
       .filter((task) => task.tags.some(isPriorityTag))
       .map((task) => ({
@@ -50,6 +77,15 @@ export default function DashboardPage() {
         summary: task.summary,
         area: "Organisation",
         href: `/organization/task/${task.id}`
+      })),
+    ...data.meetingCategories
+      .filter((category) => category.tags.some(isPriorityTag))
+      .map((category) => ({
+        id: `priority-meeting-category-${category.slug}`,
+        title: category.title,
+        summary: category.summary,
+        area: "Categorie reunion",
+        href: `/meetings/category/${category.slug}`
       })),
     ...data.meetings
       .filter((meeting) => meeting.tags.some(isPriorityTag))
