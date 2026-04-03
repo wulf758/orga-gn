@@ -7,6 +7,7 @@ import { FormEvent, useRef, useState } from "react";
 import { useAppData } from "@/components/app-data-provider";
 import { PageHero } from "@/components/page-hero";
 import { RichTextPreview } from "@/components/rich-text-preview";
+import { TagBadge } from "@/components/tag-badge";
 
 function toLines(value: string) {
   return value
@@ -96,9 +97,18 @@ export default function CharacterDetailPage() {
       <PageHero
         kicker={`${currentCharacter.role} / ${currentCharacter.faction}`}
         title={currentCharacter.name}
-        copy={currentCharacter.background}
+        copy=""
         actions={
           <>
+            <div className="hero-meta">
+              <div className="badge-row">
+                <TagBadge tag={currentCharacter.role} definitions={data.tagsRegistry} />
+                <TagBadge tag={currentCharacter.faction} definitions={data.tagsRegistry} />
+                {currentCharacter.status ? (
+                  <TagBadge tag={currentCharacter.status} definitions={data.tagsRegistry} />
+                ) : null}
+              </div>
+            </div>
             <Link href="/characters" className="button-primary">
               Retour aux personnages
             </Link>

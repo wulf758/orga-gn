@@ -3,7 +3,7 @@ import { ReactNode } from "react";
 type PageHeroProps = {
   kicker: string;
   title: string;
-  copy: string;
+  copy?: string;
   actions?: ReactNode;
   aside?: ReactNode;
 };
@@ -20,11 +20,10 @@ export function PageHero({
       <div className="hero-card">
         <p className="hero-kicker">{kicker}</p>
         <h2 className="hero-title">{title}</h2>
-        <p className="hero-copy">{copy}</p>
+        {copy ? <p className="hero-copy">{copy}</p> : null}
         {actions ? <div className="hero-actions">{actions}</div> : null}
       </div>
       <div className="insight-column">{aside}</div>
     </section>
   );
 }
-

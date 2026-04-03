@@ -309,6 +309,10 @@ select {
   margin-top: 22px;
 }
 
+.hero-meta {
+  width: 100%;
+}
+
 .button-primary,
 .button-secondary,
 .button-ghost,
