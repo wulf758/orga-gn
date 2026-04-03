@@ -36,13 +36,16 @@ export default function TagsPage() {
     const counts = new Map<string, number>();
     const lists = [
       ...data.documents.map((entry) => entry.tags),
+      ...data.characters.map((entry) => entry.tags),
       ...data.plotCategories.map((entry) => entry.tags),
       ...data.plots.map((entry) => entry.tags),
       ...data.organizationCategories.map((entry) => entry.tags),
       ...data.tasks.map((entry) => entry.tags),
       ...data.meetingCategories.map((entry) => entry.tags),
       ...data.meetings.map((entry) => entry.tags),
-      ...data.timelineEntries.map((entry) => entry.tags)
+      ...data.timelineEntries.map((entry) => entry.tags),
+      ...data.storyboardScenes.map((entry) => entry.tags),
+      ...data.kraftItems.map((entry) => entry.tags)
     ];
 
     for (const tags of lists) {
@@ -350,7 +353,7 @@ export default function TagsPage() {
                           </button>
                           <button
                             type="button"
-                            className="button-secondary"
+                            className="button-secondary-light"
                             onClick={() => {
                               if (!window.confirm(`Supprimer le tag "${definition.label}" ?`)) return;
                               deleteTagDefinition(definition.id);

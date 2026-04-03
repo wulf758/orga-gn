@@ -128,14 +128,19 @@ export function normalizeTagSectionDefinition(section: TagSection, index = 0): T
 export function getMergedTagSections(sections?: TagSection[] | null, definitions?: TagDefinition[] | null) {
   const merged = new Map<string, TagSection>();
 
-  for (const section of DEFAULT_TAG_SECTIONS) {
-    const normalized = normalizeTagSectionDefinition(section);
+  const sourceSections =
+    sections && sections.length ? sections : DEFAULT_TAG_SECTIONS;
+
+  for (const [index, section] of sourceSections.entries()) {
+    const normalized = normalizeTagSectionDefinition(section, index);
     merged.set(normalizeTagSection(normalized.label), normalized);
   }
 
-  for (const [index, section] of (sections ?? []).entries()) {
-    const normalized = normalizeTagSectionDefinition(section, index);
-    merged.set(normalizeTagSection(normalized.label), normalized);
+  if (!merged.has(normalizeTagSection(SYSTEM_TAG_SECTION.label))) {
+    merged.set(
+      normalizeTagSection(SYSTEM_TAG_SECTION.label),
+      normalizeTagSectionDefinition(SYSTEM_TAG_SECTION)
+    );
   }
 
   for (const [index, definition] of (definitions ?? []).entries()) {
@@ -158,14 +163,17 @@ export function getMergedTagSections(sections?: TagSection[] | null, definitions
 
 export function getMergedTagDefinitions(definitions?: TagDefinition[] | null) {
   const merged = new Map<string, TagDefinition>();
+  const sourceDefinitions =
+    definitions && definitions.length ? definitions : DEFAULT_TAG_DEFINITIONS;
 
-  for (const definition of DEFAULT_TAG_DEFINITIONS) {
-    merged.set(normalizeTagLabel(definition.label), normalizeTagDefinition(definition));
-  }
-
-  for (const [index, definition] of (definitions ?? []).entries()) {
+  for (const [index, definition] of sourceDefinitions.entries()) {
     const normalized = normalizeTagDefinition(definition, index);
     merged.set(normalizeTagLabel(normalized.label), normalized);
+  }
+
+  if (!merged.has(normalizeTagLabel("prioritaire"))) {
+    const systemDefinition = normalizeTagDefinition(DEFAULT_TAG_DEFINITIONS[0]);
+    merged.set(normalizeTagLabel(systemDefinition.label), systemDefinition);
   }
 
   return Array.from(merged.values()).sort((left, right) => left.label.localeCompare(right.label));
