@@ -1,62 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
 
 import { useAppData } from "@/components/app-data-provider";
-import { CreatePanel } from "@/components/create-panel";
 import { PageHero } from "@/components/page-hero";
 import { TagBadge } from "@/components/tag-badge";
-import { TagPicker } from "@/components/tag-picker";
-
-function toLines(value: string) {
-  return value
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
-}
 
 function getCharacterPreview(background: string) {
   return background.replace(/\s+/g, " ").trim();
 }
 
 export default function CharactersPage() {
-  const { data, createCharacter } = useAppData();
+  const { data } = useAppData();
   const playerCharacters = data.characters.filter((character) => character.role === "PJ");
   const nonPlayerCharacters = data.characters.filter((character) => character.role === "PNJ");
-  const [name, setName] = useState("");
-  const [role, setRole] = useState<"PJ" | "PNJ">("PJ");
-  const [faction, setFaction] = useState("");
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [background, setBackground] = useState("");
-  const [objectivesText, setObjectivesText] = useState("");
-  const [secretsText, setSecretsText] = useState("");
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (!name.trim()) {
-      return;
-    }
-
-    createCharacter({
-      name: name.trim(),
-      role,
-      faction: faction.trim() || "Sans faction",
-      tags: selectedTags,
-      background: background.trim() || "Background a completer.",
-      objectives: toLines(objectivesText),
-      secrets: toLines(secretsText)
-    });
-
-    setName("");
-    setRole("PJ");
-    setFaction("");
-    setSelectedTags([]);
-    setBackground("");
-    setObjectivesText("");
-    setSecretsText("");
-  }
 
   return (
     <>
@@ -66,93 +23,25 @@ export default function CharactersPage() {
         copy="Chaque fiche personnage reste volontairement legere pour l'instant : une faction, un background, des objectifs et des secrets."
         actions={
           <>
-            <span className="button-primary">Fiches editables actives</span>
+            <Link href="/characters/new" className="button-primary">
+              Creer un personnage
+            </Link>
             <span className="button-secondary">PJ et PNJ separes</span>
           </>
         }
         aside={
-          <CreatePanel
-            title="Creer un personnage"
-            description="Creation d'une fiche PJ ou PNJ avec les informations essentielles."
-          >
-            <form className="form-stack" onSubmit={handleSubmit}>
-              <div className="field">
-                <label htmlFor="character-name">Nom</label>
-                <input
-                  id="character-name"
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  placeholder="Exemple : Isolde"
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="character-role">Type</label>
-                <select
-                  id="character-role"
-                  value={role}
-                  onChange={(event) => setRole(event.target.value as "PJ" | "PNJ")}
-                >
-                  <option value="PJ">PJ</option>
-                  <option value="PNJ">PNJ</option>
-                </select>
-              </div>
-              <div className="field">
-                <label htmlFor="character-faction">Faction</label>
-                <input
-                  id="character-faction"
-                  value={faction}
-                  onChange={(event) => setFaction(event.target.value)}
-                  placeholder="Maison du Lion"
-                />
-              </div>
-              <div className="field">
-                <label>Tags</label>
-                <TagPicker
-                  definitions={data.tagsRegistry}
-                  selectedTags={selectedTags}
-                  onToggle={(tag) =>
-                    setSelectedTags((current) =>
-                      current.includes(tag)
-                        ? current.filter((entry) => entry !== tag)
-                        : [...current, tag]
-                    )
-                  }
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="character-background">Background</label>
-                <textarea
-                  id="character-background"
-                  value={background}
-                  onChange={(event) => setBackground(event.target.value)}
-                  placeholder="Pose ici le socle narratif du personnage."
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="character-objectives">Objectifs</label>
-                <textarea
-                  id="character-objectives"
-                  value={objectivesText}
-                  onChange={(event) => setObjectivesText(event.target.value)}
-                  placeholder={"Un objectif par ligne"}
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="character-secrets">Secrets</label>
-                <textarea
-                  id="character-secrets"
-                  value={secretsText}
-                  onChange={(event) => setSecretsText(event.target.value)}
-                  placeholder={"Un secret par ligne"}
-                />
-              </div>
-              <div className="form-actions">
-                <button type="submit" className="button-primary">
-                  Creer la fiche
-                </button>
-              </div>
-            </form>
-          </CreatePanel>
+          <div className="detail-block">
+            <h3>Creer un personnage</h3>
+            <p>
+              Ouvre une page dediee pour creer une fiche PJ ou PNJ avec ses tags,
+              son background, ses objectifs et ses secrets.
+            </p>
+            <div className="form-actions">
+              <Link href="/characters/new" className="button-primary">
+                Ouvrir l'editeur
+              </Link>
+            </div>
+          </div>
         }
       />
 

@@ -1,18 +1,17 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import { useAppData } from "@/components/app-data-provider";
-import { CreatePanel } from "@/components/create-panel";
 import { PageHero } from "@/components/page-hero";
 import { StatusPill } from "@/components/status-pill";
 import { TagBadge } from "@/components/tag-badge";
-import { TagPicker } from "@/components/tag-picker";
 
 const KRAFT_STATUSES = ["A commencer", "A finir", "Fini"] as const;
 
 export default function KraftPage() {
-  const { data, createKraftItem, updateKraftItem, deleteKraftItem } = useAppData();
+  const { data, updateKraftItem, deleteKraftItem } = useAppData();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
@@ -75,8 +74,6 @@ export default function KraftPage() {
         id: editingId,
         ...payload
       });
-    } else {
-      createKraftItem(payload);
     }
 
     resetForm();
@@ -98,89 +95,25 @@ export default function KraftPage() {
         copy="Cette vue distingue les krafts a faire des elements deja termines, pour garder une vision claire de l'avancement materiel du GN."
         actions={
           <>
-            <span className="button-primary">Liste a faire / fini</span>
+            <Link href="/kraft/new" className="button-primary">
+              Creer un kraft
+            </Link>
             <span className="button-secondary">Tags d'avancement visibles</span>
           </>
         }
         aside={
-          <CreatePanel
-            title={editingId ? "Modifier un kraft" : "Ajouter un kraft"}
-            description="Suivi des elements en fabrication, de leur responsable et de leur etat d'avancement."
-          >
-            <form className="form-stack" onSubmit={handleSubmit}>
-              <div className="field">
-                <label htmlFor="kraft-title">Titre</label>
-                <input
-                  id="kraft-title"
-                  value={title}
-                  onChange={(event) => setTitle(event.target.value)}
-                  placeholder="Exemple : Registre de succession"
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="kraft-summary">Resume</label>
-                <textarea
-                  id="kraft-summary"
-                  value={summary}
-                  onChange={(event) => setSummary(event.target.value)}
-                  placeholder="Ce qui doit etre fabrique, verifie ou termine."
-                />
-              </div>
-              <div className="field">
-                <label>Tags</label>
-                <TagPicker
-                  definitions={data.tagsRegistry}
-                  selectedTags={selectedTags}
-                  onToggle={(tag) =>
-                    setSelectedTags((current) =>
-                      current.includes(tag)
-                        ? current.filter((entry) => entry !== tag)
-                        : [...current, tag]
-                    )
-                  }
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="kraft-owner">Responsable</label>
-                <input
-                  id="kraft-owner"
-                  value={owner}
-                  onChange={(event) => setOwner(event.target.value)}
-                  placeholder="Pole accessoires"
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="kraft-status">Avancement</label>
-                <select
-                  id="kraft-status"
-                  value={status}
-                  onChange={(event) =>
-                    setStatus(event.target.value as (typeof KRAFT_STATUSES)[number])
-                  }
-                >
-                  {KRAFT_STATUSES.map((entry) => (
-                    <option key={entry} value={entry}>
-                      {entry}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-actions">
-                <button type="submit" className="button-primary">
-                  {editingId ? "Enregistrer le kraft" : "Ajouter le kraft"}
-                </button>
-                {editingId ? (
-                  <button
-                    type="button"
-                    className="button-secondary"
-                    onClick={resetForm}
-                  >
-                    Annuler
-                  </button>
-                ) : null}
-              </div>
-            </form>
-          </CreatePanel>
+          <div className="detail-block">
+            <h3>Creer un kraft</h3>
+            <p>
+              Ouvre une page dediee pour preparer un nouvel element avec ses tags,
+              son responsable et son etat d'avancement.
+            </p>
+            <div className="form-actions">
+              <Link href="/kraft/new" className="button-primary">
+                Ouvrir l'editeur
+              </Link>
+            </div>
+          </div>
         }
       />
 
