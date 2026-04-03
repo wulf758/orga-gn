@@ -14,6 +14,10 @@ function toLines(value: string) {
     .filter(Boolean);
 }
 
+function getCharacterPreview(background: string) {
+  return background.replace(/\s+/g, " ").trim();
+}
+
 export default function CharactersPage() {
   const { data, createCharacter } = useAppData();
   const playerCharacters = data.characters.filter((character) => character.role === "PJ");
@@ -146,7 +150,7 @@ export default function CharactersPage() {
               playerCharacters.map((character) => (
                 <Link href={`/characters/${character.id}`} className="list-item" key={character.id}>
                   <h3>{character.name}</h3>
-                  <p>{character.background}</p>
+                  <p className="character-preview">{getCharacterPreview(character.background)}</p>
                   <div className="meta-line">
                     <span>{character.faction}</span>
                     <span>{character.objectives.length} objectif(s)</span>
@@ -172,7 +176,7 @@ export default function CharactersPage() {
               nonPlayerCharacters.map((character) => (
                 <Link href={`/characters/${character.id}`} className="list-item" key={character.id}>
                   <h3>{character.name}</h3>
-                  <p>{character.background}</p>
+                  <p className="character-preview">{getCharacterPreview(character.background)}</p>
                   <div className="meta-line">
                     <span>{character.faction}</span>
                     <span>{character.objectives.length} objectif(s)</span>
