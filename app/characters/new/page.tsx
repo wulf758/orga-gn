@@ -22,6 +22,7 @@ export default function NewCharacterPage() {
   const [role, setRole] = useState<"PJ" | "PNJ">("PJ");
   const [faction, setFaction] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [playerNotes, setPlayerNotes] = useState("");
   const [background, setBackground] = useState("");
   const [objectivesText, setObjectivesText] = useState("");
   const [secretsText, setSecretsText] = useState("");
@@ -35,6 +36,7 @@ export default function NewCharacterPage() {
       role,
       faction: faction.trim() || "Sans faction",
       tags: selectedTags,
+      playerNotes: playerNotes.trim(),
       background: background.trim() || "Background a completer.",
       objectives: toLines(objectivesText),
       secrets: toLines(secretsText)
@@ -113,6 +115,15 @@ export default function NewCharacterPage() {
                         : [...current, tag]
                     )
                   }
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="character-create-player-notes">Joueur / contraintes</label>
+                <textarea
+                  id="character-create-player-notes"
+                  value={playerNotes}
+                  onChange={(event) => setPlayerNotes(event.target.value)}
+                  placeholder="Allergies, phobies, limites de jeu, besoins particuliers..."
                 />
               </div>
               <div className="field">

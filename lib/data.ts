@@ -267,6 +267,7 @@ export const characters: Character[] = [
     role: "PJ",
     faction: "Maison du Lion",
     tags: ["faction"],
+    playerNotes: "Joueur sensible aux scenes d'etouffement. Prevoir un point de sortie clair en cas de surcharge.",
     background:
       "Heritier brillant mais use, Alim porte a la fois l'attente dynastique de la Maison du Lion et le poids d'anciens serments qu'il ne peut plus ignorer.",
     objectives: [
@@ -285,6 +286,7 @@ export const characters: Character[] = [
     role: "PNJ",
     faction: "Veilleurs de Cendre",
     tags: ["faction", "secret"],
+    playerNotes: "PNJ interprete par une orga mobile. Eviter les scenes avec fumee dense et garder une pause eau accessible.",
     background:
       "Gardienne des rites, Mira donne l'image d'une maitrise froide et impeccable. Sa parole pese lourd, mais elle dissimule plusieurs choix deja faits dans l'ombre.",
     objectives: [
@@ -303,6 +305,7 @@ export const characters: Character[] = [
     role: "PJ",
     faction: "Ligue des Marchands",
     tags: ["faction"],
+    playerNotes: "Le joueur prefere eviter les confrontations physiques brusques et demande un rappel oral avant toute escalade.",
     background:
       "Negociant au calme redoutable, Soren voit dans l'etat actuel du royaume une occasion historique de transformer la dette en levier politique durable.",
     objectives: [

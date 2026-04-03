@@ -42,6 +42,7 @@ export type Character = {
   role: "PJ" | "PNJ";
   faction: string;
   tags: string[];
+  playerNotes?: string;
   background: string;
   objectives: string[];
   secrets: string[];

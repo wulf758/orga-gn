@@ -28,6 +28,7 @@ export default function CharacterDetailPage() {
   const [role, setRole] = useState<"PJ" | "PNJ">(character?.role ?? "PJ");
   const [faction, setFaction] = useState(character?.faction ?? "");
   const [selectedTags, setSelectedTags] = useState(character?.tags ?? []);
+  const [playerNotes, setPlayerNotes] = useState(character?.playerNotes ?? "");
   const [background, setBackground] = useState(character?.background ?? "");
   const [objectivesText, setObjectivesText] = useState(
     character?.objectives?.join("\n") ?? ""
@@ -71,6 +72,7 @@ export default function CharacterDetailPage() {
       role,
       faction: faction.trim() || "Sans faction",
       tags: selectedTags,
+      playerNotes: playerNotes.trim(),
       background: background.trim() || "Background a completer.",
       objectives: toLines(objectivesText),
       secrets: toLines(secretsText)
@@ -84,6 +86,7 @@ export default function CharacterDetailPage() {
     setRole(currentCharacter.role);
     setFaction(currentCharacter.faction);
     setSelectedTags(currentCharacter.tags);
+    setPlayerNotes(currentCharacter.playerNotes ?? "");
     setBackground(currentCharacter.background);
     setObjectivesText(currentCharacter.objectives.join("\n"));
     setSecretsText(currentCharacter.secrets.join("\n"));
@@ -137,6 +140,10 @@ export default function CharacterDetailPage() {
               <h3>Faction</h3>
               <p>{currentCharacter.faction}</p>
             </div>
+            <div className="detail-block">
+              <h3>Joueur</h3>
+              <p>{currentCharacter.playerNotes?.trim() || "Aucune contrainte renseignee."}</p>
+            </div>
           </div>
         }
       />
@@ -186,6 +193,15 @@ export default function CharacterDetailPage() {
                           : [...current, tag]
                       )
                     }
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="character-edit-player-notes">Joueur / contraintes</label>
+                  <textarea
+                    id="character-edit-player-notes"
+                    value={playerNotes}
+                    onChange={(e) => setPlayerNotes(e.target.value)}
+                    placeholder="Allergies, phobies, limites de jeu, besoins particuliers..."
                   />
                 </div>
                 <div className="field">
@@ -246,6 +262,11 @@ export default function CharacterDetailPage() {
         </div>
 
         <div className="surface-grid">
+          <div className="detail-block span-12">
+            <h3>Joueur / contraintes</h3>
+            <p>{currentCharacter.playerNotes?.trim() || "Aucune contrainte renseignee pour l'instant."}</p>
+          </div>
+
           <div className="detail-block span-6">
             <h3>Objectifs</h3>
             {currentCharacter.objectives.length ? (

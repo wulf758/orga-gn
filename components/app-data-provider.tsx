@@ -98,6 +98,7 @@ type CreateCharacterInput = {
   role: "PJ" | "PNJ";
   faction: string;
   tags: string[];
+  playerNotes: string;
   background: string;
   objectives: string[];
   secrets: string[];
@@ -109,6 +110,7 @@ type UpdateCharacterInput = {
   role: "PJ" | "PNJ";
   faction: string;
   tags: string[];
+  playerNotes: string;
   background: string;
   objectives: string[];
   secrets: string[];
@@ -522,6 +524,7 @@ function normalizeAppData(parsed?: Partial<AppData> | null, fallbackName?: strin
     characters: (parsed?.characters ?? initialData.characters).map((character) => ({
       ...character,
       tags: character.tags ?? [],
+      playerNotes: character.playerNotes ?? "",
       background: character.background ?? character.pitch ?? "",
       objectives: character.objectives ?? character.goals ?? [],
       secrets: character.secrets ?? [],
@@ -1672,6 +1675,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           role: input.role,
           faction: input.faction,
           tags: input.tags,
+          playerNotes: input.playerNotes,
           background: input.background,
           objectives: input.objectives,
           secrets: input.secrets
@@ -1695,15 +1699,16 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           ...current,
           characters: current.characters.map((character) =>
             character.id === input.id
-              ? {
-                  ...character,
-                  name: input.name,
-                  role: input.role,
-                  faction: input.faction,
-                  tags: input.tags,
-                  background: input.background,
-                  objectives: input.objectives,
-                  secrets: input.secrets
+                ? {
+                    ...character,
+                    name: input.name,
+                    role: input.role,
+                    faction: input.faction,
+                    tags: input.tags,
+                    playerNotes: input.playerNotes,
+                    background: input.background,
+                    objectives: input.objectives,
+                    secrets: input.secrets
                 }
               : character
           ),
