@@ -1067,6 +1067,13 @@ button:disabled,
   -webkit-line-clamp: 2;
 }
 
+.search-result-preview {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+
 .timeline-day-list {
   display: grid;
   gap: 10px;

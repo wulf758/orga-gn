@@ -18,6 +18,10 @@ type SearchResult = {
   meta?: string;
 };
 
+function getSearchPreview(summary: string) {
+  return summary.replace(/\s+/g, " ").trim();
+}
+
 export default function TagSearchPage() {
   const params = useParams<{ tag: string }>();
   const { data } = useAppData();
@@ -173,7 +177,7 @@ export default function TagSearchPage() {
                 {group.results.map((result) => (
                   <Link href={result.href} className="list-item" key={result.id}>
                     <h3>{result.title}</h3>
-                    <p>{result.summary}</p>
+                    <p className="search-result-preview">{getSearchPreview(result.summary)}</p>
                     <div className="meta-line">
                       <span>{result.bucket}</span>
                       {result.meta ? <span>{result.meta}</span> : null}
