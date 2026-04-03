@@ -25,12 +25,20 @@ import {
   TimelineDay,
   TimelineEntry,
   TagDefinition,
+  TagSection,
   UpdateEntry,
   WorkspaceCategory,
   WorkspaceSummary
 } from "@/lib/types";
 import { formatDateLabel, formatDateTimeLabel } from "@/lib/date-utils";
-import { getMergedTagDefinitions, normalizeTagDefinition, normalizeTagLabel } from "@/lib/tags";
+import {
+  getMergedTagDefinitions,
+  getMergedTagSections,
+  normalizeTagDefinition,
+  normalizeTagLabel,
+  normalizeTagSection,
+  normalizeTagSectionDefinition
+} from "@/lib/tags";
 
 type GameRecord = WorkspaceSummary;
 
@@ -361,6 +369,35 @@ function renameTagInList(tags: string[], previousLabel: string, nextLabel: strin
   );
 }
 
+function upsertTagSection(
+  sections: TagSection[],
+  label: string,
+  color: string
+) {
+  const normalizedLabel = normalizeTagSection(label);
+  const normalized = normalizeTagSectionDefinition({
+    id: `section-${slugify(normalizedLabel) || Date.now().toString()}`,
+    label: normalizedLabel,
+    color
+  });
+
+  const existing = sections.find(
+    (section) => normalizeTagSection(section.label) === normalizedLabel
+  );
+
+  if (!existing) {
+    return [...sections, normalized].sort((left, right) => left.label.localeCompare(right.label));
+  }
+
+  return sections
+    .map((section) =>
+      normalizeTagSection(section.label) === normalizedLabel
+        ? { ...section, label: normalized.label, color: normalized.color }
+        : section
+    )
+    .sort((left, right) => left.label.localeCompare(right.label));
+}
+
 function makeStoryboardCards(count: number, existingCards: StoryboardCard[] = []) {
   return Array.from({ length: count }, (_, index) => ({
     id: existingCards[index]?.id ?? `story-card-${crypto.randomUUID()}`,
@@ -429,6 +466,10 @@ function normalizeStoryboardScene(scene: Partial<StoryboardScene> & Record<strin
 
 function normalizeAppData(parsed?: Partial<AppData> | null, fallbackName?: string): AppData {
   const initialData = getEmptyAppData(fallbackName);
+  const tagSections = getMergedTagSections(parsed?.tagSections, parsed?.tagsRegistry);
+  const sectionColorMap = new Map(
+    tagSections.map((section) => [normalizeTagSection(section.label), section.color] as const)
+  );
 
   return {
     ...initialData,
@@ -437,7 +478,12 @@ function normalizeAppData(parsed?: Partial<AppData> | null, fallbackName?: strin
       typeof parsed?.gameName === "string" && parsed.gameName.trim()
         ? parsed.gameName
         : fallbackName || initialData.gameName,
-    tagsRegistry: getMergedTagDefinitions(parsed?.tagsRegistry),
+    tagSections,
+    tagsRegistry: getMergedTagDefinitions(parsed?.tagsRegistry).map((definition) => ({
+      ...definition,
+      sectionColor:
+        sectionColorMap.get(normalizeTagSection(definition.section)) ?? definition.sectionColor
+    })),
     documents: (parsed?.documents ?? initialData.documents).map((document) => ({
       ...document,
       tags: document.tags ?? []
@@ -1256,6 +1302,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
           return {
             ...current,
+            tagSections: upsertTagSection(current.tagSections, input.section, input.sectionColor),
             tagsRegistry: [...current.tagsRegistry, definition].sort((left, right) =>
               left.label.localeCompare(right.label)
             ),
@@ -1290,18 +1337,25 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             return current;
           }
 
+          const sameSection =
+            normalizeTagSection(target.section) === normalizeTagSection(input.section);
+
           return {
             ...current,
+            tagSections: upsertTagSection(current.tagSections, input.section, input.sectionColor),
             tagsRegistry: current.tagsRegistry
               .map((definition) =>
-                definition.id === input.id
+                definition.id === input.id ||
+                (sameSection &&
+                  normalizeTagSection(definition.section) === normalizeTagSection(input.section))
                   ? normalizeTagDefinition({
                       ...definition,
-                      label: nextLabel,
-                      section: input.section,
+                      label: definition.id === input.id ? nextLabel : definition.label,
+                      section: definition.id === input.id ? input.section : definition.section,
                       sectionColor: input.sectionColor,
-                      color: input.color,
-                      description: input.description
+                      color: input.sectionColor,
+                      description:
+                        definition.id === input.id ? input.description : definition.description
                     })
                   : definition
               )

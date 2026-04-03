@@ -13,6 +13,12 @@ export type TagDefinition = {
   description?: string;
 };
 
+export type TagSection = {
+  id: string;
+  label: string;
+  color: string;
+};
+
 export type DocumentPage = {
   slug: string;
   kind: "folder" | "note";
@@ -157,6 +163,7 @@ export type KraftItem = {
 
 export type AppData = {
   gameName: string;
+  tagSections: TagSection[];
   tagsRegistry: TagDefinition[];
   documents: DocumentPage[];
   characters: Character[];

@@ -6,7 +6,7 @@ import { useAppData } from "@/components/app-data-provider";
 import { CreatePanel } from "@/components/create-panel";
 import { PageHero } from "@/components/page-hero";
 import { TagBadge } from "@/components/tag-badge";
-import { groupTagDefinitionsBySection, normalizeTagLabel } from "@/lib/tags";
+import { groupTagDefinitionsWithSections, normalizeTagLabel } from "@/lib/tags";
 
 export default function TagsPage() {
   const { data, createTagDefinition, updateTagDefinition, deleteTagDefinition } = useAppData();
@@ -39,8 +39,8 @@ export default function TagsPage() {
     return counts;
   }, [data]);
   const groupedDefinitions = useMemo(
-    () => groupTagDefinitionsBySection(data.tagsRegistry),
-    [data.tagsRegistry]
+    () => groupTagDefinitionsWithSections(data.tagsRegistry, data.tagSections),
+    [data.tagsRegistry, data.tagSections]
   );
 
   function resetForm() {
@@ -194,42 +194,46 @@ export default function TagsPage() {
                 </div>
               </div>
               <div className="tags-grid">
-                {group.definitions.map((definition) => (
-                  <article className="tag-registry-item" key={definition.id}>
-                    <button
-                      type="button"
-                      className="tag-edit-trigger"
-                      onClick={() => handleEdit(definition.id)}
-                    >
-                      <div className="tag-registry-meta">
-                        <TagBadge tag={definition.label} definitions={data.tagsRegistry} />
-                        <span className="chip">
-                          {usageMap.get(normalizeTagLabel(definition.label)) ?? 0} usage(s)
-                        </span>
-                        <span className="chip">Cliquer pour modifier</span>
-                      </div>
-                    </button>
-                    <p>{definition.description || "Aucune description pour l'instant."}</p>
-                    <div className="form-actions">
-                      <button type="button" className="button-primary" onClick={() => handleEdit(definition.id)}>
-                        Modifier
-                      </button>
+                {group.definitions.length ? (
+                  group.definitions.map((definition) => (
+                    <article className="tag-registry-item" key={definition.id}>
                       <button
                         type="button"
-                        className="button-secondary"
-                        onClick={() => {
-                          if (!window.confirm(`Supprimer le tag "${definition.label}" ?`)) return;
-                          deleteTagDefinition(definition.id);
-                          if (editingId === definition.id) {
-                            resetForm();
-                          }
-                        }}
+                        className="tag-edit-trigger"
+                        onClick={() => handleEdit(definition.id)}
                       >
-                        Supprimer
+                        <div className="tag-registry-meta">
+                          <TagBadge tag={definition.label} definitions={data.tagsRegistry} />
+                          <span className="chip">
+                            {usageMap.get(normalizeTagLabel(definition.label)) ?? 0} usage(s)
+                          </span>
+                          <span className="chip">Cliquer pour modifier</span>
+                        </div>
                       </button>
-                    </div>
-                  </article>
-                ))}
+                      <p>{definition.description || "Aucune description pour l'instant."}</p>
+                      <div className="form-actions">
+                        <button type="button" className="button-primary" onClick={() => handleEdit(definition.id)}>
+                          Modifier
+                        </button>
+                        <button
+                          type="button"
+                          className="button-secondary"
+                          onClick={() => {
+                            if (!window.confirm(`Supprimer le tag "${definition.label}" ?`)) return;
+                            deleteTagDefinition(definition.id);
+                            if (editingId === definition.id) {
+                              resetForm();
+                            }
+                          }}
+                        >
+                          Supprimer
+                        </button>
+                      </div>
+                    </article>
+                  ))
+                ) : (
+                  <div className="empty-state">Aucun tag dans cette section pour l'instant.</div>
+                )}
               </div>
             </section>
           ))}

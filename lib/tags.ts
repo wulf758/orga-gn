@@ -1,4 +1,12 @@
-import { TagDefinition } from "@/lib/types";
+import { TagDefinition, TagSection } from "@/lib/types";
+
+export const DEFAULT_TAG_SECTIONS: TagSection[] = [
+  { id: "section-pilotage", label: "pilotage", color: "#A63A24" },
+  { id: "section-documents", label: "documents", color: "#6F5D4B" },
+  { id: "section-personnages", label: "personnages", color: "#7A4E2D" },
+  { id: "section-intrigues", label: "intrigues", color: "#6B4E71" },
+  { id: "section-kraft", label: "kraft", color: "#2A6F97" }
+];
 
 export const DEFAULT_TAG_DEFINITIONS: TagDefinition[] = [
   {
@@ -89,6 +97,43 @@ export function normalizeTagDefinition(definition: TagDefinition, index = 0): Ta
   };
 }
 
+export function normalizeTagSectionDefinition(section: TagSection, index = 0): TagSection {
+  const normalizedLabel = normalizeTagSection(section.label) || `section-${index + 1}`;
+
+  return {
+    id: section.id?.trim() || `section-${normalizedLabel.replace(/[^a-z0-9]+/g, "-")}`,
+    label: normalizedLabel,
+    color: section.color?.trim() || "#8C7B75"
+  };
+}
+
+export function getMergedTagSections(sections?: TagSection[] | null, definitions?: TagDefinition[] | null) {
+  const merged = new Map<string, TagSection>();
+
+  for (const section of DEFAULT_TAG_SECTIONS) {
+    const normalized = normalizeTagSectionDefinition(section);
+    merged.set(normalizeTagSection(normalized.label), normalized);
+  }
+
+  for (const [index, section] of (sections ?? []).entries()) {
+    const normalized = normalizeTagSectionDefinition(section, index);
+    merged.set(normalizeTagSection(normalized.label), normalized);
+  }
+
+  for (const [index, definition] of (definitions ?? []).entries()) {
+    const normalizedSection = normalizeTagSection(definition.section) || `section-${index + 1}`;
+    if (!merged.has(normalizedSection)) {
+      merged.set(normalizedSection, {
+        id: `section-${normalizedSection.replace(/[^a-z0-9]+/g, "-")}`,
+        label: normalizedSection,
+        color: definition.sectionColor?.trim() || definition.color?.trim() || "#8C7B75"
+      });
+    }
+  }
+
+  return Array.from(merged.values()).sort((left, right) => left.label.localeCompare(right.label));
+}
+
 export function getMergedTagDefinitions(definitions?: TagDefinition[] | null) {
   const merged = new Map<string, TagDefinition>();
 
@@ -133,6 +178,25 @@ export function groupTagDefinitionsBySection(definitions: TagDefinition[]) {
       definitions: group.definitions.sort((left, right) => left.label.localeCompare(right.label))
     }))
     .sort((left, right) => left.section.localeCompare(right.section));
+}
+
+export function groupTagDefinitionsWithSections(
+  definitions: TagDefinition[],
+  sections: TagSection[]
+) {
+  const groupedDefinitions = groupTagDefinitionsBySection(definitions);
+  const groupsBySection = new Map(
+    groupedDefinitions.map((group) => [normalizeTagSection(group.section), group] as const)
+  );
+
+  return sections.map((section) => {
+    const existing = groupsBySection.get(normalizeTagSection(section.label));
+    return {
+      section: section.label,
+      sectionColor: section.color,
+      definitions: existing?.definitions ?? []
+    };
+  });
 }
 
 export function isPriorityTag(tag: string) {
