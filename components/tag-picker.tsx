@@ -51,7 +51,7 @@ export function TagPicker({ definitions, selectedTags, onToggle }: TagPickerProp
                   className={`tag-toggle${isActive ? " active" : ""}`}
                   style={
                     currentDefinition
-                      ? ({ "--tag-accent": currentDefinition.color } as CSSProperties)
+                      ? ({ "--tag-accent": currentDefinition.sectionColor } as CSSProperties)
                       : undefined
                   }
                   onClick={() => onToggle(definition.label)}

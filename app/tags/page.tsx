@@ -13,7 +13,6 @@ export default function TagsPage() {
   const [section, setSection] = useState("personnages");
   const [sectionColor, setSectionColor] = useState("#7A4E2D");
   const [label, setLabel] = useState("");
-  const [color, setColor] = useState("#C84B31");
   const [description, setDescription] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -49,7 +48,6 @@ export default function TagsPage() {
     setSection("personnages");
     setSectionColor("#7A4E2D");
     setLabel("");
-    setColor("#C84B31");
     setDescription("");
   }
 
@@ -63,7 +61,7 @@ export default function TagsPage() {
         label,
         section,
         sectionColor,
-        color,
+        color: sectionColor,
         description
       });
     } else {
@@ -71,7 +69,7 @@ export default function TagsPage() {
         label,
         section,
         sectionColor,
-        color,
+        color: sectionColor,
         description
       });
     }
@@ -87,7 +85,6 @@ export default function TagsPage() {
     setSection(target.section);
     setSectionColor(target.sectionColor);
     setLabel(target.label);
-    setColor(target.color);
     setDescription(target.description ?? "");
   }
 
@@ -134,15 +131,6 @@ export default function TagsPage() {
                   value={label}
                   onChange={(event) => setLabel(event.target.value)}
                   placeholder="Exemple : prioritaire"
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="tag-color">Couleur</label>
-                <input
-                  id="tag-color"
-                  type="color"
-                  value={color}
-                  onChange={(event) => setColor(event.target.value)}
                 />
               </div>
               <div className="field">

@@ -15,7 +15,7 @@ export function TagBadge({ tag, definitions, className }: TagBadgeProps) {
   const definition = findTagDefinition(definitions, tag);
   const style = definition
     ? ({
-        "--tag-accent": definition.color
+        "--tag-accent": definition.sectionColor
       } as CSSProperties)
     : undefined;
 
