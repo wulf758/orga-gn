@@ -6,6 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAppData } from "@/components/app-data-provider";
 import { CreatePanel } from "@/components/create-panel";
 import { PageHero } from "@/components/page-hero";
+import { TagBadge } from "@/components/tag-badge";
+import { TagPicker } from "@/components/tag-picker";
 import { formatDateLabel } from "@/lib/date-utils";
 import { StoryboardCard, StoryboardScene } from "@/lib/types";
 
@@ -22,6 +24,7 @@ function StoryboardPageContent() {
   const searchParams = useSearchParams();
   const {
     data,
+    createTimelineDay,
     createStoryboardScene,
     updateStoryboardScene,
     deleteStoryboardScene
@@ -59,7 +62,10 @@ function StoryboardPageContent() {
   const [newEndTime, setNewEndTime] = useState("10:30");
   const [newLocation, setNewLocation] = useState("");
   const [newSummary, setNewSummary] = useState("");
+  const [newTags, setNewTags] = useState<string[]>([]);
   const [newCardCount, setNewCardCount] = useState("4");
+  const [newTimelineDayLabel, setNewTimelineDayLabel] = useState("");
+  const [newTimelineDayDate, setNewTimelineDayDate] = useState("");
 
   const [title, setTitle] = useState("");
   const [dayId, setDayId] = useState("");
@@ -68,6 +74,7 @@ function StoryboardPageContent() {
   const [location, setLocation] = useState("");
   const [status, setStatus] = useState<StoryboardScene["status"]>("A cadrer");
   const [summary, setSummary] = useState("");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [cards, setCards] = useState<StoryboardCard[]>([]);
 
   useEffect(() => {
@@ -93,6 +100,7 @@ function StoryboardPageContent() {
     setLocation(selectedScene.location);
     setStatus(selectedScene.status);
     setSummary(selectedScene.summary);
+    setSelectedTags(selectedScene.tags);
     setCards(selectedScene.cards);
   }, [selectedScene?.id]);
 
@@ -127,6 +135,7 @@ function StoryboardPageContent() {
       endTime: newEndTime,
       location: newLocation.trim() || "Lieu a preciser",
       summary: newSummary.trim() || "Scene storyboard a completer.",
+      tags: newTags,
       cardCount: Number(newCardCount)
     });
 
@@ -136,7 +145,21 @@ function StoryboardPageContent() {
     setNewEndTime("10:30");
     setNewLocation("");
     setNewSummary("");
+    setNewTags([]);
     setNewCardCount("4");
+  }
+
+  function handleCreateDay(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!newTimelineDayLabel.trim() || !newTimelineDayDate) return;
+
+    createTimelineDay({
+      label: newTimelineDayLabel.trim(),
+      dateISO: newTimelineDayDate
+    });
+
+    setNewTimelineDayLabel("");
+    setNewTimelineDayDate("");
   }
 
   function handleSave(event: FormEvent<HTMLFormElement>) {
@@ -152,6 +175,7 @@ function StoryboardPageContent() {
       location: location.trim() || "Lieu a preciser",
       status,
       summary: summary.trim() || "Scene storyboard a completer.",
+      tags: selectedTags,
       cards
     });
 
@@ -256,6 +280,20 @@ function StoryboardPageContent() {
                 />
               </div>
               <div className="field">
+                <label>Tags</label>
+                <TagPicker
+                  definitions={data.tagsRegistry}
+                  selectedTags={newTags}
+                  onToggle={(tag) =>
+                    setNewTags((current) =>
+                      current.includes(tag)
+                        ? current.filter((entry) => entry !== tag)
+                        : [...current, tag]
+                    )
+                  }
+                />
+              </div>
+              <div className="field">
                 <label htmlFor="story-new-count">Nombre de cases</label>
                 <select
                   id="story-new-count"
@@ -288,6 +326,37 @@ function StoryboardPageContent() {
             </div>
           </div>
 
+          <CreatePanel
+            title="Creer un jour"
+            description="Ajoute un jour de timeline reutilisable dans les scenes du storyboard."
+          >
+            <form className="form-stack" onSubmit={handleCreateDay}>
+              <div className="field">
+                <label htmlFor="story-new-day-label">Nom du jour</label>
+                <input
+                  id="story-new-day-label"
+                  value={newTimelineDayLabel}
+                  onChange={(event) => setNewTimelineDayLabel(event.target.value)}
+                  placeholder="Exemple : Jour 2"
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="story-new-day-date">Date</label>
+                <input
+                  id="story-new-day-date"
+                  type="date"
+                  value={newTimelineDayDate}
+                  onChange={(event) => setNewTimelineDayDate(event.target.value)}
+                />
+              </div>
+              <div className="form-actions">
+                <button type="submit" className="button-primary">
+                  Ajouter le jour
+                </button>
+              </div>
+            </form>
+          </CreatePanel>
+
           <div className="list-stack">
             {orderedScenes.map((scene) => (
               <button
@@ -301,6 +370,13 @@ function StoryboardPageContent() {
                   {getDayLabel(scene.dayId)} | {scene.startTime} - {scene.endTime}
                 </span>
                 <span className="timeline-day-date">{scene.location}</span>
+                {scene.tags.length ? (
+                  <div className="badge-row" style={{ marginTop: 8 }}>
+                    {scene.tags.map((tag) => (
+                      <TagBadge key={tag} tag={tag} definitions={data.tagsRegistry} />
+                    ))}
+                  </div>
+                ) : null}
               </button>
             ))}
           </div>
@@ -418,6 +494,21 @@ function StoryboardPageContent() {
                   />
                 </div>
 
+                <div className="field">
+                  <label>Tags</label>
+                  <TagPicker
+                    definitions={data.tagsRegistry}
+                    selectedTags={selectedTags}
+                    onToggle={(tag) =>
+                      setSelectedTags((current) =>
+                        current.includes(tag)
+                          ? current.filter((entry) => entry !== tag)
+                          : [...current, tag]
+                      )
+                    }
+                  />
+                </div>
+
                 <div className="storyboard-card-grid">
                   {cards.map((card, index) => (
                     <article className="storyboard-card" key={card.id}>
@@ -502,6 +593,14 @@ function StoryboardPageContent() {
                   </span>
                   <span>{selectedScene.location}</span>
                 </div>
+
+                {selectedScene.tags.length ? (
+                  <div className="badge-row">
+                    {selectedScene.tags.map((tag) => (
+                      <TagBadge key={tag} tag={tag} definitions={data.tagsRegistry} />
+                    ))}
+                  </div>
+                ) : null}
 
                 <div className="storyboard-card-grid">
                   {selectedScene.cards.map((card, index) => (

@@ -216,6 +216,7 @@ type CreateStoryboardSceneInput = {
   endTime: string;
   location: string;
   summary: string;
+  tags: string[];
   cardCount: number;
 };
 
@@ -228,6 +229,7 @@ type UpdateStoryboardSceneInput = {
   location: string;
   status: StoryboardScene["status"];
   summary: string;
+  tags: string[];
   cards: StoryboardCard[];
 };
 
@@ -488,6 +490,7 @@ function normalizeStoryboardScene(scene: Partial<StoryboardScene> & Record<strin
     location: (scene.location as string) ?? "Lieu a preciser",
     status: (scene.status as StoryboardScene["status"]) ?? "A cadrer",
     summary: (scene.summary as string) ?? "Scene storyboard a completer.",
+    tags: (scene.tags as string[] | undefined) ?? [],
     cards
   } satisfies StoryboardScene;
 }
@@ -1568,6 +1571,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
               ...entry,
               tags: renameTagInList(entry.tags, target.label, nextLabel)
             })),
+            storyboardScenes: current.storyboardScenes.map((scene) => ({
+              ...scene,
+              tags: renameTagInList(scene.tags, target.label, nextLabel)
+            })),
             kraftItems: current.kraftItems.map((item) => ({
               ...item,
               tags: renameTagInList(item.tags, target.label, nextLabel)
@@ -1634,6 +1641,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             timelineEntries: current.timelineEntries.map((entry) => ({
               ...entry,
               tags: removeFromList(entry.tags)
+            })),
+            storyboardScenes: current.storyboardScenes.map((scene) => ({
+              ...scene,
+              tags: removeFromList(scene.tags)
             })),
             kraftItems: current.kraftItems.map((item) => ({
               ...item,
@@ -2149,6 +2160,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       createStoryboardScene(input) {
         const sceneId = `story-scene-${crypto.randomUUID()}`;
         const timelineEntryId = input.dayId ? `timeline-entry-${crypto.randomUUID()}` : undefined;
+        const timelineTags = Array.from(new Set(["storyboard", ...input.tags]));
         const scene: StoryboardScene = {
           id: sceneId,
           title: input.title,
@@ -2159,6 +2171,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           location: input.location,
           status: "A cadrer",
           summary: input.summary,
+          tags: input.tags,
           cards: makeStoryboardCards(input.cardCount)
         };
 
@@ -2175,7 +2188,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
                   endTime: input.endTime,
                   location: input.location,
                   summary: input.summary,
-                  tags: ["storyboard"],
+                  tags: timelineTags,
                   storyboardSceneId: sceneId
                 },
                 ...current.timelineEntries
@@ -2200,6 +2213,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             (entry) =>
               entry.id === existingScene?.timelineEntryId || entry.storyboardSceneId === input.id
           );
+          const timelineTags = Array.from(new Set(["storyboard", ...input.tags]));
 
           let timelineEntryId = existingScene?.timelineEntryId ?? existingEntry?.id;
           let nextTimelineEntries = current.timelineEntries;
@@ -2216,7 +2230,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
                       endTime: input.endTime,
                       location: input.location,
                       summary: input.summary,
-                      tags: ["storyboard"],
+                      tags: timelineTags,
                       storyboardSceneId: input.id
                     }
                   : entry
@@ -2233,7 +2247,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
                   endTime: input.endTime,
                   location: input.location,
                   summary: input.summary,
-                  tags: ["storyboard"],
+                  tags: timelineTags,
                   storyboardSceneId: input.id
                 },
                 ...current.timelineEntries
@@ -2261,6 +2275,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
                     location: input.location,
                     status: input.status,
                     summary: input.summary,
+                    tags: input.tags,
                     cards: input.cards
                   }
                 : scene

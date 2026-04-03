@@ -644,6 +644,7 @@ export const storyboardScenes: StoryboardScene[] = [
     location: "Parvis du camp",
     status: "En cours",
     summary: "Installer les rapports de force et faire sentir qu'un incident politique couve deja.",
+    tags: [],
     cards: [
       {
         id: "story-scene-1-card-1",
@@ -681,6 +682,7 @@ export const storyboardScenes: StoryboardScene[] = [
     location: "Salle du conseil",
     status: "A cadrer",
     summary: "Faire basculer l'intrigue en donnant une piste solide aux PJ decisionnaires.",
+    tags: [],
     cards: [
       {
         id: "story-scene-2-card-1",

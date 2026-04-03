@@ -151,6 +151,7 @@ export type StoryboardScene = {
   location: string;
   status: "A cadrer" | "En cours" | "Pret";
   summary: string;
+  tags: string[];
   cards: StoryboardCard[];
 };
 
