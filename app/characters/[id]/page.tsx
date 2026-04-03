@@ -9,6 +9,7 @@ import { PageHero } from "@/components/page-hero";
 import { RichTextPreview } from "@/components/rich-text-preview";
 import { TagBadge } from "@/components/tag-badge";
 import { TagPicker } from "@/components/tag-picker";
+import { findTagDefinition, normalizeTagSection } from "@/lib/tags";
 
 function toLines(value: string) {
   return value
@@ -26,7 +27,6 @@ export default function CharacterDetailPage() {
 
   const [name, setName] = useState(character?.name ?? "");
   const [role, setRole] = useState<"PJ" | "PNJ">(character?.role ?? "PJ");
-  const [faction, setFaction] = useState(character?.faction ?? "");
   const [selectedTags, setSelectedTags] = useState(character?.tags ?? []);
   const [playerNotes, setPlayerNotes] = useState(character?.playerNotes ?? "");
   const [background, setBackground] = useState(character?.background ?? "");
@@ -43,6 +43,10 @@ export default function CharacterDetailPage() {
   }
 
   const currentCharacter = character;
+  const factionLabel =
+    currentCharacter.tags
+      .filter((tag) => normalizeTagSection(findTagDefinition(data.tagsRegistry, tag)?.section ?? "") === "faction")
+      .join(", ") || currentCharacter.faction || "Sans faction";
 
   function insertAroundSelection(before: string, after = before) {
     const textarea = backgroundRef.current;
@@ -70,7 +74,6 @@ export default function CharacterDetailPage() {
       id: currentCharacter.id,
       name: name.trim(),
       role,
-      faction: faction.trim() || "Sans faction",
       tags: selectedTags,
       playerNotes: playerNotes.trim(),
       background: background.trim() || "Background a completer.",
@@ -84,7 +87,6 @@ export default function CharacterDetailPage() {
   function handleCancel() {
     setName(currentCharacter.name);
     setRole(currentCharacter.role);
-    setFaction(currentCharacter.faction);
     setSelectedTags(currentCharacter.tags);
     setPlayerNotes(currentCharacter.playerNotes ?? "");
     setBackground(currentCharacter.background);
@@ -102,7 +104,7 @@ export default function CharacterDetailPage() {
   return (
     <>
       <PageHero
-        kicker={`${currentCharacter.role} / ${currentCharacter.faction}`}
+        kicker={`${currentCharacter.role} / ${factionLabel}`}
         title={currentCharacter.name}
         copy=""
         actions={
@@ -110,7 +112,6 @@ export default function CharacterDetailPage() {
             <div className="hero-meta">
               <div className="badge-row">
                 <TagBadge tag={currentCharacter.role} definitions={data.tagsRegistry} />
-                <TagBadge tag={currentCharacter.faction} definitions={data.tagsRegistry} />
                 {currentCharacter.status ? (
                   <TagBadge tag={currentCharacter.status} definitions={data.tagsRegistry} />
                 ) : null}
@@ -138,7 +139,7 @@ export default function CharacterDetailPage() {
             </div>
             <div className="detail-block">
               <h3>Faction</h3>
-              <p>{currentCharacter.faction}</p>
+              <p>{factionLabel}</p>
             </div>
             <div className="detail-block">
               <h3>Joueur</h3>
@@ -165,7 +166,7 @@ export default function CharacterDetailPage() {
               </div>
               <div className="form-stack">
                 <div className="surface-grid" style={{ marginTop: 0 }}>
-                  <div className="span-5 field">
+                  <div className="span-7 field">
                     <label htmlFor="character-edit-name">Nom</label>
                     <input id="character-edit-name" value={name} onChange={(e) => setName(e.target.value)} />
                   </div>
@@ -175,10 +176,6 @@ export default function CharacterDetailPage() {
                       <option value="PJ">PJ</option>
                       <option value="PNJ">PNJ</option>
                     </select>
-                  </div>
-                  <div className="span-5 field">
-                    <label htmlFor="character-edit-faction">Faction</label>
-                    <input id="character-edit-faction" value={faction} onChange={(e) => setFaction(e.target.value)} />
                   </div>
                 </div>
                 <div className="field">
@@ -194,6 +191,9 @@ export default function CharacterDetailPage() {
                       )
                     }
                   />
+                  <p className="field-help">
+                    La faction est maintenant geree via les tags de la section `faction`.
+                  </p>
                 </div>
                 <div className="field">
                   <label htmlFor="character-edit-player-notes">Joueur / contraintes</label>
@@ -253,7 +253,7 @@ export default function CharacterDetailPage() {
                   Modifier
                 </button>
               </div>
-              <p className="section-copy">{currentCharacter.faction}</p>
+              <p className="section-copy">{factionLabel}</p>
               <div className="note-read-content">
                 <RichTextPreview text={currentCharacter.background} />
               </div>

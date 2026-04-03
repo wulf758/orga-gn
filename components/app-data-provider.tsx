@@ -96,7 +96,6 @@ type UpdateDocumentInput = {
 type CreateCharacterInput = {
   name: string;
   role: "PJ" | "PNJ";
-  faction: string;
   tags: string[];
   playerNotes: string;
   background: string;
@@ -108,7 +107,6 @@ type UpdateCharacterInput = {
   id: string;
   name: string;
   role: "PJ" | "PNJ";
-  faction: string;
   tags: string[];
   playerNotes: string;
   background: string;
@@ -391,6 +389,22 @@ function renameTagInList(tags: string[], previousLabel: string, nextLabel: strin
       )
     )
   );
+}
+
+function deriveFactionFromTags(
+  tags: string[],
+  definitions: TagDefinition[],
+  fallback = "Sans faction"
+) {
+  const factionTags = tags.filter((tag) => {
+    const definition = definitions.find(
+      (entry) => normalizeTagLabel(entry.label) === normalizeTagLabel(tag)
+    );
+
+    return normalizeTagSection(definition?.section ?? "") === "faction";
+  });
+
+  return factionTags.length ? factionTags.join(", ") : fallback;
 }
 
 function upsertTagSection(
@@ -1669,21 +1683,22 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           .toString()
           .slice(-5)}`;
 
-        const character: Character = {
-          id,
-          name: input.name,
-          role: input.role,
-          faction: input.faction,
-          tags: input.tags,
-          playerNotes: input.playerNotes,
-          background: input.background,
-          objectives: input.objectives,
-          secrets: input.secrets
-        };
-
         setData((current) => ({
           ...current,
-          characters: [character, ...current.characters],
+          characters: [
+            {
+              id,
+              name: input.name,
+              role: input.role,
+              faction: deriveFactionFromTags(input.tags, current.tagsRegistry),
+              tags: input.tags,
+              playerNotes: input.playerNotes,
+              background: input.background,
+              objectives: input.objectives,
+              secrets: input.secrets
+            },
+            ...current.characters
+          ],
           updates: [
             makeUpdate(
               "Personnages",
@@ -1699,15 +1714,19 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           ...current,
           characters: current.characters.map((character) =>
             character.id === input.id
-                ? {
-                    ...character,
-                    name: input.name,
-                    role: input.role,
-                    faction: input.faction,
-                    tags: input.tags,
-                    playerNotes: input.playerNotes,
-                    background: input.background,
-                    objectives: input.objectives,
+                  ? {
+                      ...character,
+                      name: input.name,
+                      role: input.role,
+                      faction: deriveFactionFromTags(
+                        input.tags,
+                        current.tagsRegistry,
+                        character.faction || "Sans faction"
+                      ),
+                      tags: input.tags,
+                      playerNotes: input.playerNotes,
+                      background: input.background,
+                      objectives: input.objectives,
                     secrets: input.secrets
                 }
               : character

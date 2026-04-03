@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useAppData } from "@/components/app-data-provider";
 import { PageHero } from "@/components/page-hero";
 import { TagPicker } from "@/components/tag-picker";
+import { normalizeTagSection } from "@/lib/tags";
 
 function toLines(value: string) {
   return value
@@ -20,12 +21,14 @@ export default function NewCharacterPage() {
   const { data, createCharacter } = useAppData();
   const [name, setName] = useState("");
   const [role, setRole] = useState<"PJ" | "PNJ">("PJ");
-  const [faction, setFaction] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [playerNotes, setPlayerNotes] = useState("");
   const [background, setBackground] = useState("");
   const [objectivesText, setObjectivesText] = useState("");
   const [secretsText, setSecretsText] = useState("");
+  const factionTags = data.tagsRegistry.filter(
+    (definition) => normalizeTagSection(definition.section) === "faction"
+  );
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -34,7 +37,6 @@ export default function NewCharacterPage() {
     createCharacter({
       name: name.trim(),
       role,
-      faction: faction.trim() || "Sans faction",
       tags: selectedTags,
       playerNotes: playerNotes.trim(),
       background: background.trim() || "Background a completer.",
@@ -73,7 +75,7 @@ export default function NewCharacterPage() {
             </div>
             <div className="form-stack">
               <div className="surface-grid" style={{ marginTop: 0 }}>
-                <div className="span-5 field">
+                <div className="span-7 field">
                   <label htmlFor="character-create-name">Nom</label>
                   <input
                     id="character-create-name"
@@ -93,15 +95,6 @@ export default function NewCharacterPage() {
                     <option value="PNJ">PNJ</option>
                   </select>
                 </div>
-                <div className="span-5 field">
-                  <label htmlFor="character-create-faction">Faction</label>
-                  <input
-                    id="character-create-faction"
-                    value={faction}
-                    onChange={(event) => setFaction(event.target.value)}
-                    placeholder="Maison du Lion"
-                  />
-                </div>
               </div>
               <div className="field">
                 <label>Tags</label>
@@ -116,6 +109,11 @@ export default function NewCharacterPage() {
                     )
                   }
                 />
+                {factionTags.length ? (
+                  <p className="field-help">
+                    La faction est maintenant geree via les tags de la section `faction`.
+                  </p>
+                ) : null}
               </div>
               <div className="field">
                 <label htmlFor="character-create-player-notes">Joueur / contraintes</label>
