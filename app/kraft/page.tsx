@@ -6,6 +6,8 @@ import { useAppData } from "@/components/app-data-provider";
 import { CreatePanel } from "@/components/create-panel";
 import { PageHero } from "@/components/page-hero";
 import { StatusPill } from "@/components/status-pill";
+import { TagBadge } from "@/components/tag-badge";
+import { TagPicker } from "@/components/tag-picker";
 
 const KRAFT_STATUSES = ["A commencer", "A finir", "Fini"] as const;
 
@@ -14,6 +16,7 @@ export default function KraftPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [owner, setOwner] = useState("");
   const [status, setStatus] =
     useState<(typeof KRAFT_STATUSES)[number]>("A commencer");
@@ -33,6 +36,7 @@ export default function KraftPage() {
     if (!editingItem) {
       setTitle("");
       setSummary("");
+      setSelectedTags([]);
       setOwner("");
       setStatus("A commencer");
       return;
@@ -40,6 +44,7 @@ export default function KraftPage() {
 
     setTitle(editingItem.title);
     setSummary(editingItem.summary);
+    setSelectedTags(editingItem.tags);
     setOwner(editingItem.owner);
     setStatus(editingItem.status);
   }, [editingItem]);
@@ -48,6 +53,7 @@ export default function KraftPage() {
     setEditingId(null);
     setTitle("");
     setSummary("");
+    setSelectedTags([]);
     setOwner("");
     setStatus("A commencer");
   }
@@ -59,6 +65,7 @@ export default function KraftPage() {
     const payload = {
       title: title.trim(),
       summary: summary.trim() || "Kraft a completer.",
+      tags: selectedTags,
       owner: owner.trim() || "Responsable a definir",
       status
     };
@@ -117,6 +124,20 @@ export default function KraftPage() {
                   value={summary}
                   onChange={(event) => setSummary(event.target.value)}
                   placeholder="Ce qui doit etre fabrique, verifie ou termine."
+                />
+              </div>
+              <div className="field">
+                <label>Tags</label>
+                <TagPicker
+                  definitions={data.tagsRegistry}
+                  selectedTags={selectedTags}
+                  onToggle={(tag) =>
+                    setSelectedTags((current) =>
+                      current.includes(tag)
+                        ? current.filter((entry) => entry !== tag)
+                        : [...current, tag]
+                    )
+                  }
                 />
               </div>
               <div className="field">
@@ -197,6 +218,13 @@ export default function KraftPage() {
               kraftToDo.map((item) => (
                 <article className="list-item" key={item.id}>
                   <h3>{item.title}</h3>
+                  {item.tags.length ? (
+                    <div className="badge-row">
+                      {item.tags.map((tag) => (
+                        <TagBadge key={tag} tag={tag} definitions={data.tagsRegistry} />
+                      ))}
+                    </div>
+                  ) : null}
                   <p>{item.summary}</p>
                   <div className="meta-line">
                     <span>{item.owner}</span>
@@ -245,6 +273,13 @@ export default function KraftPage() {
               kraftDone.map((item) => (
                 <article className="list-item" key={item.id}>
                   <h3>{item.title}</h3>
+                  {item.tags.length ? (
+                    <div className="badge-row">
+                      {item.tags.map((tag) => (
+                        <TagBadge key={tag} tag={tag} definitions={data.tagsRegistry} />
+                      ))}
+                    </div>
+                  ) : null}
                   <p>{item.summary}</p>
                   <div className="meta-line">
                     <span>{item.owner}</span>

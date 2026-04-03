@@ -6,6 +6,8 @@ import { FormEvent, useState } from "react";
 import { useAppData } from "@/components/app-data-provider";
 import { CreatePanel } from "@/components/create-panel";
 import { PageHero } from "@/components/page-hero";
+import { TagBadge } from "@/components/tag-badge";
+import { TagPicker } from "@/components/tag-picker";
 
 function toLines(value: string) {
   return value
@@ -25,6 +27,7 @@ export default function CharactersPage() {
   const [name, setName] = useState("");
   const [role, setRole] = useState<"PJ" | "PNJ">("PJ");
   const [faction, setFaction] = useState("");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [background, setBackground] = useState("");
   const [objectivesText, setObjectivesText] = useState("");
   const [secretsText, setSecretsText] = useState("");
@@ -40,6 +43,7 @@ export default function CharactersPage() {
       name: name.trim(),
       role,
       faction: faction.trim() || "Sans faction",
+      tags: selectedTags,
       background: background.trim() || "Background a completer.",
       objectives: toLines(objectivesText),
       secrets: toLines(secretsText)
@@ -48,6 +52,7 @@ export default function CharactersPage() {
     setName("");
     setRole("PJ");
     setFaction("");
+    setSelectedTags([]);
     setBackground("");
     setObjectivesText("");
     setSecretsText("");
@@ -101,6 +106,20 @@ export default function CharactersPage() {
                 />
               </div>
               <div className="field">
+                <label>Tags</label>
+                <TagPicker
+                  definitions={data.tagsRegistry}
+                  selectedTags={selectedTags}
+                  onToggle={(tag) =>
+                    setSelectedTags((current) =>
+                      current.includes(tag)
+                        ? current.filter((entry) => entry !== tag)
+                        : [...current, tag]
+                    )
+                  }
+                />
+              </div>
+              <div className="field">
                 <label htmlFor="character-background">Background</label>
                 <textarea
                   id="character-background"
@@ -150,6 +169,13 @@ export default function CharactersPage() {
               playerCharacters.map((character) => (
                 <Link href={`/characters/${character.id}`} className="list-item" key={character.id}>
                   <h3>{character.name}</h3>
+                  {character.tags.length ? (
+                    <div className="badge-row">
+                      {character.tags.map((tag) => (
+                        <TagBadge key={tag} tag={tag} definitions={data.tagsRegistry} />
+                      ))}
+                    </div>
+                  ) : null}
                   <p className="character-preview">{getCharacterPreview(character.background)}</p>
                   <div className="meta-line">
                     <span>{character.faction}</span>
@@ -176,6 +202,13 @@ export default function CharactersPage() {
               nonPlayerCharacters.map((character) => (
                 <Link href={`/characters/${character.id}`} className="list-item" key={character.id}>
                   <h3>{character.name}</h3>
+                  {character.tags.length ? (
+                    <div className="badge-row">
+                      {character.tags.map((tag) => (
+                        <TagBadge key={tag} tag={tag} definitions={data.tagsRegistry} />
+                      ))}
+                    </div>
+                  ) : null}
                   <p className="character-preview">{getCharacterPreview(character.background)}</p>
                   <div className="meta-line">
                     <span>{character.faction}</span>

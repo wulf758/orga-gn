@@ -41,6 +41,7 @@ export type Character = {
   name: string;
   role: "PJ" | "PNJ";
   faction: string;
+  tags: string[];
   background: string;
   objectives: string[];
   secrets: string[];
@@ -157,6 +158,7 @@ export type KraftItem = {
   id: string;
   title: string;
   summary: string;
+  tags: string[];
   owner: string;
   status: "A commencer" | "A finir" | "Fini";
 };

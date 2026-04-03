@@ -97,6 +97,7 @@ type CreateCharacterInput = {
   name: string;
   role: "PJ" | "PNJ";
   faction: string;
+  tags: string[];
   background: string;
   objectives: string[];
   secrets: string[];
@@ -107,6 +108,7 @@ type UpdateCharacterInput = {
   name: string;
   role: "PJ" | "PNJ";
   faction: string;
+  tags: string[];
   background: string;
   objectives: string[];
   secrets: string[];
@@ -232,6 +234,7 @@ type UpdateStoryboardSceneInput = {
 type CreateKraftItemInput = {
   title: string;
   summary: string;
+  tags: string[];
   owner: string;
   status: KraftItem["status"];
 };
@@ -240,6 +243,7 @@ type UpdateKraftItemInput = {
   id: string;
   title: string;
   summary: string;
+  tags: string[];
   owner: string;
   status: KraftItem["status"];
 };
@@ -514,6 +518,7 @@ function normalizeAppData(parsed?: Partial<AppData> | null, fallbackName?: strin
     })),
     characters: (parsed?.characters ?? initialData.characters).map((character) => ({
       ...character,
+      tags: character.tags ?? [],
       background: character.background ?? character.pitch ?? "",
       objectives: character.objectives ?? character.goals ?? [],
       secrets: character.secrets ?? [],
@@ -580,7 +585,10 @@ function normalizeAppData(parsed?: Partial<AppData> | null, fallbackName?: strin
     storyboardScenes: (parsed?.storyboardScenes ?? initialData.storyboardScenes).map((scene) =>
       normalizeStoryboardScene(scene)
     ),
-    kraftItems: parsed?.kraftItems ?? initialData.kraftItems
+    kraftItems: (parsed?.kraftItems ?? initialData.kraftItems).map((item) => ({
+      ...item,
+      tags: item.tags ?? []
+    }))
   };
 }
 
@@ -1552,9 +1560,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
               ...meeting,
               tags: renameTagInList(meeting.tags, target.label, nextLabel)
             })),
+            characters: current.characters.map((character) => ({
+              ...character,
+              tags: renameTagInList(character.tags, target.label, nextLabel)
+            })),
             timelineEntries: current.timelineEntries.map((entry) => ({
               ...entry,
               tags: renameTagInList(entry.tags, target.label, nextLabel)
+            })),
+            kraftItems: current.kraftItems.map((item) => ({
+              ...item,
+              tags: renameTagInList(item.tags, target.label, nextLabel)
             })),
             updates: [
               makeUpdate(
@@ -1611,9 +1627,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
               ...meeting,
               tags: removeFromList(meeting.tags)
             })),
+            characters: current.characters.map((character) => ({
+              ...character,
+              tags: removeFromList(character.tags)
+            })),
             timelineEntries: current.timelineEntries.map((entry) => ({
               ...entry,
               tags: removeFromList(entry.tags)
+            })),
+            kraftItems: current.kraftItems.map((item) => ({
+              ...item,
+              tags: removeFromList(item.tags)
             })),
             updates: [
               makeUpdate(
@@ -1636,6 +1660,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           name: input.name,
           role: input.role,
           faction: input.faction,
+          tags: input.tags,
           background: input.background,
           objectives: input.objectives,
           secrets: input.secrets
@@ -1664,6 +1689,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
                   name: input.name,
                   role: input.role,
                   faction: input.faction,
+                  tags: input.tags,
                   background: input.background,
                   objectives: input.objectives,
                   secrets: input.secrets
@@ -2285,6 +2311,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           id: `kraft-${crypto.randomUUID()}`,
           title: input.title,
           summary: input.summary,
+          tags: input.tags,
           owner: input.owner,
           status: input.status
         };
@@ -2311,6 +2338,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
                   ...item,
                   title: input.title,
                   summary: input.summary,
+                  tags: input.tags,
                   owner: input.owner,
                   status: input.status
                 }

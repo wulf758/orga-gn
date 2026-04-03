@@ -266,6 +266,7 @@ export const characters: Character[] = [
     name: "Alim de Vermeille",
     role: "PJ",
     faction: "Maison du Lion",
+    tags: ["faction"],
     background:
       "Heritier brillant mais use, Alim porte a la fois l'attente dynastique de la Maison du Lion et le poids d'anciens serments qu'il ne peut plus ignorer.",
     objectives: [
@@ -283,6 +284,7 @@ export const characters: Character[] = [
     name: "Mira la Cendre",
     role: "PNJ",
     faction: "Veilleurs de Cendre",
+    tags: ["faction", "secret"],
     background:
       "Gardienne des rites, Mira donne l'image d'une maitrise froide et impeccable. Sa parole pese lourd, mais elle dissimule plusieurs choix deja faits dans l'ombre.",
     objectives: [
@@ -300,6 +302,7 @@ export const characters: Character[] = [
     name: "Soren Valcor",
     role: "PJ",
     faction: "Ligue des Marchands",
+    tags: ["faction"],
     background:
       "Negociant au calme redoutable, Soren voit dans l'etat actuel du royaume une occasion historique de transformer la dette en levier politique durable.",
     objectives: [
@@ -712,6 +715,7 @@ export const kraftItems: KraftItem[] = [
     id: "kraft-1",
     title: "Registre de succession",
     summary: "Fabriquer le registre factice qui servira pendant les scenes politiques.",
+    tags: ["logistique"],
     owner: "Pole accessoires",
     status: "A commencer"
   },
@@ -719,6 +723,7 @@ export const kraftItems: KraftItem[] = [
     id: "kraft-2",
     title: "Sceaux de la Maison du Lion",
     summary: "Finaliser les finitions cire et verifier la tenue des sceaux en jeu.",
+    tags: ["logistique"],
     owner: "Cyril",
     status: "A finir"
   },
@@ -726,6 +731,7 @@ export const kraftItems: KraftItem[] = [
     id: "kraft-3",
     title: "Bannieres du prologue",
     summary: "Serie de bannieres deja pretes pour l'ouverture et les temps ceremoniels.",
+    tags: ["logistique"],
     owner: "Pole decor",
     status: "Fini"
   }

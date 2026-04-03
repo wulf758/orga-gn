@@ -8,6 +8,7 @@ import { useAppData } from "@/components/app-data-provider";
 import { PageHero } from "@/components/page-hero";
 import { RichTextPreview } from "@/components/rich-text-preview";
 import { TagBadge } from "@/components/tag-badge";
+import { TagPicker } from "@/components/tag-picker";
 
 function toLines(value: string) {
   return value
@@ -26,6 +27,7 @@ export default function CharacterDetailPage() {
   const [name, setName] = useState(character?.name ?? "");
   const [role, setRole] = useState<"PJ" | "PNJ">(character?.role ?? "PJ");
   const [faction, setFaction] = useState(character?.faction ?? "");
+  const [selectedTags, setSelectedTags] = useState(character?.tags ?? []);
   const [background, setBackground] = useState(character?.background ?? "");
   const [objectivesText, setObjectivesText] = useState(
     character?.objectives?.join("\n") ?? ""
@@ -68,6 +70,7 @@ export default function CharacterDetailPage() {
       name: name.trim(),
       role,
       faction: faction.trim() || "Sans faction",
+      tags: selectedTags,
       background: background.trim() || "Background a completer.",
       objectives: toLines(objectivesText),
       secrets: toLines(secretsText)
@@ -80,6 +83,7 @@ export default function CharacterDetailPage() {
     setName(currentCharacter.name);
     setRole(currentCharacter.role);
     setFaction(currentCharacter.faction);
+    setSelectedTags(currentCharacter.tags);
     setBackground(currentCharacter.background);
     setObjectivesText(currentCharacter.objectives.join("\n"));
     setSecretsText(currentCharacter.secrets.join("\n"));
@@ -107,6 +111,9 @@ export default function CharacterDetailPage() {
                 {currentCharacter.status ? (
                   <TagBadge tag={currentCharacter.status} definitions={data.tagsRegistry} />
                 ) : null}
+                {currentCharacter.tags.map((tag) => (
+                  <TagBadge key={tag} tag={tag} definitions={data.tagsRegistry} />
+                ))}
               </div>
             </div>
             <Link href="/characters" className="button-primary">
@@ -166,6 +173,20 @@ export default function CharacterDetailPage() {
                     <label htmlFor="character-edit-faction">Faction</label>
                     <input id="character-edit-faction" value={faction} onChange={(e) => setFaction(e.target.value)} />
                   </div>
+                </div>
+                <div className="field">
+                  <label>Tags</label>
+                  <TagPicker
+                    definitions={data.tagsRegistry}
+                    selectedTags={selectedTags}
+                    onToggle={(tag) =>
+                      setSelectedTags((current) =>
+                        current.includes(tag)
+                          ? current.filter((entry) => entry !== tag)
+                          : [...current, tag]
+                      )
+                    }
+                  />
                 </div>
                 <div className="field">
                   <label htmlFor="character-edit-background">Background</label>
