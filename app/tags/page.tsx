@@ -321,7 +321,7 @@ export default function TagsPage() {
                     <article className="tag-registry-item" key={definition.id}>
                       {isSystemTagLabel(definition.label) ? (
                         <div className="tag-registry-meta">
-                          <TagBadge tag={definition.label} definitions={data.tagsRegistry} />
+                          <TagBadge tag={definition.label} definitions={data.tagsRegistry} interactive={false} />
                           <span className="chip">
                             {usageMap.get(normalizeTagLabel(definition.label)) ?? 0} usage(s)
                           </span>
@@ -334,7 +334,7 @@ export default function TagsPage() {
                           onClick={() => handleEdit(definition.id)}
                         >
                           <div className="tag-registry-meta">
-                            <TagBadge tag={definition.label} definitions={data.tagsRegistry} />
+                            <TagBadge tag={definition.label} definitions={data.tagsRegistry} interactive={false} />
                             <span className="chip">
                               {usageMap.get(normalizeTagLabel(definition.label)) ?? 0} usage(s)
                             </span>
