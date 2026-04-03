@@ -88,6 +88,14 @@ export default function TagsPage() {
     setDescription(target.description ?? "");
   }
 
+  function handleSectionChange(nextSection: string) {
+    setSection(nextSection);
+    const matchingSection = data.tagSections.find((entry) => entry.label === nextSection);
+    if (matchingSection) {
+      setSectionColor(matchingSection.color);
+    }
+  }
+
   return (
     <>
       <PageHero
@@ -108,12 +116,17 @@ export default function TagsPage() {
             <form className="form-stack" onSubmit={handleSubmit}>
               <div className="field">
                 <label htmlFor="tag-section">Section</label>
-                <input
+                <select
                   id="tag-section"
                   value={section}
-                  onChange={(event) => setSection(event.target.value)}
-                  placeholder="Exemple : personnages"
-                />
+                  onChange={(event) => handleSectionChange(event.target.value)}
+                >
+                  {data.tagSections.map((entry) => (
+                    <option key={entry.id} value={entry.label}>
+                      {entry.label}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="field">
                 <label htmlFor="tag-section-color">Couleur de section</label>
