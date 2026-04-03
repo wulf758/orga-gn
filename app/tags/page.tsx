@@ -147,9 +147,24 @@ export default function TagsPage() {
                   {editingId ? "Enregistrer le tag" : "Ajouter le tag"}
                 </button>
                 {editingId ? (
-                  <button type="button" className="button-secondary" onClick={resetForm}>
-                    Annuler
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      className="button-secondary-light"
+                      onClick={() => {
+                        const target = data.tagsRegistry.find((entry) => entry.id === editingId);
+                        if (!target) return;
+                        if (!window.confirm(`Supprimer le tag "${target.label}" ?`)) return;
+                        deleteTagDefinition(target.id);
+                        resetForm();
+                      }}
+                    >
+                      Supprimer
+                    </button>
+                    <button type="button" className="button-secondary-light" onClick={resetForm}>
+                      Annuler
+                    </button>
+                  </>
                 ) : null}
               </div>
             </form>
