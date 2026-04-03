@@ -6,10 +6,12 @@ import { useAppData } from "@/components/app-data-provider";
 import { CreatePanel } from "@/components/create-panel";
 import { PageHero } from "@/components/page-hero";
 import { TagBadge } from "@/components/tag-badge";
-import { normalizeTagLabel } from "@/lib/tags";
+import { groupTagDefinitionsBySection, normalizeTagLabel } from "@/lib/tags";
 
 export default function TagsPage() {
   const { data, createTagDefinition, updateTagDefinition, deleteTagDefinition } = useAppData();
+  const [section, setSection] = useState("personnages");
+  const [sectionColor, setSectionColor] = useState("#7A4E2D");
   const [label, setLabel] = useState("");
   const [color, setColor] = useState("#C84B31");
   const [description, setDescription] = useState("");
@@ -37,9 +39,15 @@ export default function TagsPage() {
 
     return counts;
   }, [data]);
+  const groupedDefinitions = useMemo(
+    () => groupTagDefinitionsBySection(data.tagsRegistry),
+    [data.tagsRegistry]
+  );
 
   function resetForm() {
     setEditingId(null);
+    setSection("personnages");
+    setSectionColor("#7A4E2D");
     setLabel("");
     setColor("#C84B31");
     setDescription("");
@@ -53,12 +61,16 @@ export default function TagsPage() {
       updateTagDefinition({
         id: editingId,
         label,
+        section,
+        sectionColor,
         color,
         description
       });
     } else {
       createTagDefinition({
         label,
+        section,
+        sectionColor,
         color,
         description
       });
@@ -72,6 +84,8 @@ export default function TagsPage() {
     if (!target) return;
 
     setEditingId(target.id);
+    setSection(target.section);
+    setSectionColor(target.sectionColor);
     setLabel(target.label);
     setColor(target.color);
     setDescription(target.description ?? "");
@@ -81,8 +95,8 @@ export default function TagsPage() {
     <>
       <PageHero
         kicker="Tags / lexique commun"
-        title="Un seul registre de tags pour tout le GN."
-        copy="Cette page centralise les tags du projet. Le meme vocabulaire et les memes couleurs peuvent ensuite etre reutilises dans les documents, intrigues, taches, reunions et timeline."
+        title="Des tags ranges par sections metier."
+        copy="Chaque tag appartient maintenant a une section comme personnages, PNJ, intrigues ou kraft. On garde un lexique commun, mais classe de facon beaucoup plus lisible."
         actions={
           <>
             <span className="button-primary">Tags coordonnes</span>
@@ -95,6 +109,24 @@ export default function TagsPage() {
             description="Un tag bien defini sera plus facile a retrouver partout dans l'outil."
           >
             <form className="form-stack" onSubmit={handleSubmit}>
+              <div className="field">
+                <label htmlFor="tag-section">Section</label>
+                <input
+                  id="tag-section"
+                  value={section}
+                  onChange={(event) => setSection(event.target.value)}
+                  placeholder="Exemple : personnages"
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="tag-section-color">Couleur de section</label>
+                <input
+                  id="tag-section-color"
+                  type="color"
+                  value={sectionColor}
+                  onChange={(event) => setSectionColor(event.target.value)}
+                />
+              </div>
               <div className="field">
                 <label htmlFor="tag-label">Nom du tag</label>
                 <input
@@ -141,37 +173,55 @@ export default function TagsPage() {
         <div className="section-header">
           <div>
             <p className="section-kicker">Registre</p>
-            <h2 className="section-title">Tags du GN</h2>
+            <h2 className="section-title">Sections et tags du GN</h2>
           </div>
         </div>
 
         <div className="tags-grid">
-          {data.tagsRegistry.map((definition) => (
-            <article className="tag-registry-item" key={definition.id}>
-              <div className="tag-registry-meta">
-                <TagBadge tag={definition.label} definitions={data.tagsRegistry} />
-                <span className="chip">{usageMap.get(normalizeTagLabel(definition.label)) ?? 0} usage(s)</span>
+          {groupedDefinitions.map((group) => (
+            <section className="tag-section-card" key={group.section}>
+              <div className="tag-section-header">
+                <span
+                  className="tag-section-dot"
+                  style={{ backgroundColor: group.sectionColor }}
+                />
+                <div>
+                  <p className="section-kicker">Section</p>
+                  <h3 className="section-title">{group.section}</h3>
+                </div>
               </div>
-              <p>{definition.description || "Aucune description pour l'instant."}</p>
-              <div className="form-actions">
-                <button type="button" className="button-primary" onClick={() => handleEdit(definition.id)}>
-                  Modifier
-                </button>
-                <button
-                  type="button"
-                  className="button-secondary"
-                  onClick={() => {
-                    if (!window.confirm(`Supprimer le tag "${definition.label}" ?`)) return;
-                    deleteTagDefinition(definition.id);
-                    if (editingId === definition.id) {
-                      resetForm();
-                    }
-                  }}
-                >
-                  Supprimer
-                </button>
+              <div className="tags-grid">
+                {group.definitions.map((definition) => (
+                  <article className="tag-registry-item" key={definition.id}>
+                    <div className="tag-registry-meta">
+                      <TagBadge tag={definition.label} definitions={data.tagsRegistry} />
+                      <span className="chip">
+                        {usageMap.get(normalizeTagLabel(definition.label)) ?? 0} usage(s)
+                      </span>
+                    </div>
+                    <p>{definition.description || "Aucune description pour l'instant."}</p>
+                    <div className="form-actions">
+                      <button type="button" className="button-primary" onClick={() => handleEdit(definition.id)}>
+                        Modifier
+                      </button>
+                      <button
+                        type="button"
+                        className="button-secondary"
+                        onClick={() => {
+                          if (!window.confirm(`Supprimer le tag "${definition.label}" ?`)) return;
+                          deleteTagDefinition(definition.id);
+                          if (editingId === definition.id) {
+                            resetForm();
+                          }
+                        }}
+                      >
+                        Supprimer
+                      </button>
+                    </div>
+                  </article>
+                ))}
               </div>
-            </article>
+            </section>
           ))}
         </div>
       </section>

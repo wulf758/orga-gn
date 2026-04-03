@@ -2,7 +2,7 @@
 
 import { CSSProperties } from "react";
 
-import { findTagDefinition } from "@/lib/tags";
+import { findTagDefinition, groupTagDefinitionsBySection, normalizeTagLabel } from "@/lib/tags";
 import { TagDefinition } from "@/lib/types";
 
 type TagPickerProps = {
@@ -12,32 +12,58 @@ type TagPickerProps = {
 };
 
 export function TagPicker({ definitions, selectedTags, onToggle }: TagPickerProps) {
-  const visibleTags = Array.from(
-    new Set([
-      ...definitions.map((definition) => definition.label),
-      ...selectedTags
-    ])
-  ).sort((left, right) => left.localeCompare(right));
+  const definitionMap = new Map(
+    definitions.map((definition) => [normalizeTagLabel(definition.label), definition] as const)
+  );
+
+  const mergedDefinitions = [
+    ...definitions,
+    ...selectedTags
+      .filter((tag) => !definitionMap.has(normalizeTagLabel(tag)))
+      .map((tag) => ({
+        id: `tag-${normalizeTagLabel(tag)}`,
+        label: tag,
+        section: "general",
+        sectionColor: "#8C7B75",
+        color: "#8C7B75",
+        description: ""
+      }))
+  ];
+  const groupedDefinitions = groupTagDefinitionsBySection(mergedDefinitions);
 
   return (
-    <div className="tag-picker">
-      {visibleTags.map((tag) => {
-        const isActive = selectedTags.includes(tag);
-        const definition = findTagDefinition(definitions, tag);
+    <div className="tag-picker-groups">
+      {groupedDefinitions.map((group) => (
+        <section className="tag-picker-group" key={group.section}>
+          <div className="tag-picker-group-header">
+            <span className="tag-section-dot" style={{ backgroundColor: group.sectionColor }} />
+            <span>{group.section}</span>
+          </div>
+          <div className="tag-picker">
+            {group.definitions.map((definition) => {
+              const isActive = selectedTags.includes(definition.label);
+              const currentDefinition = findTagDefinition(definitions, definition.label) ?? definition;
 
-        return (
-          <button
-            key={tag}
-            type="button"
-            className={`tag-toggle${isActive ? " active" : ""}`}
-            style={definition ? ({ "--tag-accent": definition.color } as CSSProperties) : undefined}
-            onClick={() => onToggle(tag)}
-            title={definition?.description || tag}
-          >
-            {tag}
-          </button>
-        );
-      })}
+              return (
+                <button
+                  key={definition.id}
+                  type="button"
+                  className={`tag-toggle${isActive ? " active" : ""}`}
+                  style={
+                    currentDefinition
+                      ? ({ "--tag-accent": currentDefinition.color } as CSSProperties)
+                      : undefined
+                  }
+                  onClick={() => onToggle(definition.label)}
+                  title={currentDefinition?.description || definition.label}
+                >
+                  {definition.label}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }

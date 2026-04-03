@@ -7,6 +7,8 @@ export type NavItem = {
 export type TagDefinition = {
   id: string;
   label: string;
+  section: string;
+  sectionColor: string;
   color: string;
   description?: string;
 };

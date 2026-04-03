@@ -251,6 +251,8 @@ type UpdateCategoryInput = {
 
 type CreateTagDefinitionInput = {
   label: string;
+  section: string;
+  sectionColor: string;
   color: string;
   description?: string;
 };
@@ -258,6 +260,8 @@ type CreateTagDefinitionInput = {
 type UpdateTagDefinitionInput = {
   id: string;
   label: string;
+  section: string;
+  sectionColor: string;
   color: string;
   description?: string;
 };
@@ -1244,6 +1248,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           const definition = normalizeTagDefinition({
             id: `tag-${slugify(nextLabel) || Date.now().toString()}`,
             label: nextLabel,
+            section: input.section,
+            sectionColor: input.sectionColor,
             color: input.color,
             description: input.description
           });
@@ -1292,6 +1298,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
                   ? normalizeTagDefinition({
                       ...definition,
                       label: nextLabel,
+                      section: input.section,
+                      sectionColor: input.sectionColor,
                       color: input.color,
                       description: input.description
                     })
