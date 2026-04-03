@@ -280,7 +280,7 @@ export default function DashboardPage() {
               priorityItems.map((item) => (
                 <Link href={item.href} className="list-item" key={item.id}>
                   <h3>{item.title}</h3>
-                  <p>{item.summary}</p>
+                  <p className="dashboard-priority-preview">{item.summary}</p>
                   <div className="meta-line">
                     <span>{item.area}</span>
                     <TagBadge tag="prioritaire" definitions={data.tagsRegistry} />
