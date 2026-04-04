@@ -47,11 +47,6 @@ export default function HomePage() {
   const [isRestoring, setIsRestoring] = useState(false);
   const [isDeletingPermanently, setIsDeletingPermanently] = useState(false);
 
-  const selectedGame = useMemo(
-    () => games.find((game) => game.id === selectedGameId) ?? null,
-    [games, selectedGameId]
-  );
-
   useEffect(() => {
     if (!games.length) {
       setSelectedGameId(null);
@@ -95,13 +90,14 @@ export default function HomePage() {
     }
   }, [selectedGameId]);
 
-  async function handleOpenGame(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!selectedGame || selectedGame.archived || isOpening) return;
+  async function handleOpenGameById(gameId: string) {
+    const targetGame = games.find((game) => game.id === gameId);
+
+    if (!targetGame || targetGame.archived || isOpening) return;
     setIsOpening(true);
 
     const result = await openGame({
-      id: selectedGame.id
+      id: gameId
     });
 
     if (!result.ok) {
@@ -173,11 +169,12 @@ export default function HomePage() {
     setAuthError("");
   }
 
-  async function handleRestoreGame() {
-    if (!selectedGame || !selectedGame.archived || isRestoring) return;
+  async function handleRestoreGameById(gameId: string) {
+    const targetGame = games.find((game) => game.id === gameId);
+    if (!targetGame || !targetGame.archived || isRestoring) return;
 
     setIsRestoring(true);
-    const result = await restoreGame({ id: selectedGame.id });
+    const result = await restoreGame({ id: gameId });
 
     if (!result.ok) {
       setArchiveError(result.error ?? "Restauration impossible.");
@@ -186,24 +183,25 @@ export default function HomePage() {
     }
 
     setArchiveError("");
-    setArchiveSuccess(`Le GN "${selectedGame.name}" a ete restaure.`);
+    setArchiveSuccess(`Le GN "${targetGame.name}" a ete restaure.`);
     setIsRestoring(false);
   }
 
-  async function handleDeleteGamePermanently() {
-    if (!selectedGame || !selectedGame.archived || isDeletingPermanently) return;
+  async function handleDeleteGamePermanentlyById(gameId: string) {
+    const targetGame = games.find((game) => game.id === gameId);
+    if (!targetGame || !targetGame.archived || isDeletingPermanently) return;
 
     const confirmed = window.confirm(
       buildDeleteConfirmation({
         entityLabel: "definitivement le GN",
-        name: selectedGame.name
+        name: targetGame.name
       })
     );
 
     if (!confirmed) return;
 
     setIsDeletingPermanently(true);
-    const result = await deleteGamePermanently({ id: selectedGame.id });
+    const result = await deleteGamePermanently({ id: gameId });
 
     if (!result.ok) {
       setArchiveError(result.error ?? "Suppression definitive impossible.");
@@ -212,7 +210,7 @@ export default function HomePage() {
     }
 
     setArchiveError("");
-    setArchiveSuccess(`Le GN "${selectedGame.name}" a ete supprime definitivement.`);
+    setArchiveSuccess(`Le GN "${targetGame.name}" a ete supprime definitivement.`);
     setIsDeletingPermanently(false);
   }
 
@@ -409,7 +407,7 @@ export default function HomePage() {
           <div className="surface span-12 success-banner">{archiveSuccess}</div>
         ) : null}
 
-        <div className="surface span-7">
+        <div className="surface span-12">
           <div className="section-header">
             <div>
               <p className="section-kicker">GN disponibles</p>
@@ -424,14 +422,9 @@ export default function HomePage() {
           {activeGames.length ? (
             <div className="list-stack">
               {activeGames.map((game) => (
-                <button
-                  type="button"
+                <article
                   key={game.id}
                   className={`workspace-card${selectedGameId === game.id ? " active" : ""}`}
-                  onClick={() => {
-                    setSelectedGameId(game.id);
-                    setArchiveError("");
-                  }}
                 >
                   <div className="workspace-card-header">
                     <h3>{game.name}</h3>
@@ -441,7 +434,35 @@ export default function HomePage() {
                     {game.characterCount} personnages, {game.plotCount} intrigues,{" "}
                     {game.kraftCount} krafts suivis.
                   </p>
-                </button>
+                  <div className="form-actions">
+                    <button
+                      type="button"
+                      className="button-primary"
+                      onClick={() => {
+                        setSelectedGameId(game.id);
+                        setArchiveError("");
+                        void handleOpenGameById(game.id);
+                      }}
+                      disabled={isOpening || !isAuthenticated}
+                    >
+                      {isOpening && selectedGameId === game.id
+                        ? "Ouverture..."
+                        : "Acceder a l'espace"}
+                    </button>
+                    {game.role === "admin" ? (
+                      <Link
+                        href={`/games/${game.id}/manage`}
+                        className="button-secondary button-secondary-light"
+                        onClick={() => {
+                          setSelectedGameId(game.id);
+                          setArchiveError("");
+                        }}
+                      >
+                        Gestion
+                      </Link>
+                    ) : null}
+                  </div>
+                </article>
               ))}
             </div>
           ) : isReady ? (
@@ -469,16 +490,11 @@ export default function HomePage() {
               {archivedGames.length ? (
                 <div className="list-stack">
                   {archivedGames.map((game) => (
-                    <button
-                      type="button"
+                    <article
                       key={game.id}
                       className={`workspace-card workspace-card-archived${
                         selectedGameId === game.id ? " active" : ""
                       }`}
-                      onClick={() => {
-                        setSelectedGameId(game.id);
-                        setArchiveError("");
-                      }}
                     >
                       <div className="workspace-card-header">
                         <h3>{game.name}</h3>
@@ -491,7 +507,37 @@ export default function HomePage() {
                           : "date inconnue"}
                         .
                       </p>
-                    </button>
+                      <div className="form-actions">
+                        <button
+                          type="button"
+                          className="button-primary"
+                          onClick={() => {
+                            setSelectedGameId(game.id);
+                            setArchiveError("");
+                            void handleRestoreGameById(game.id);
+                          }}
+                          disabled={isRestoring}
+                        >
+                          {isRestoring && selectedGameId === game.id
+                            ? "Restauration..."
+                            : "Restaurer"}
+                        </button>
+                        <button
+                          type="button"
+                          className="button-danger"
+                          onClick={() => {
+                            setSelectedGameId(game.id);
+                            setArchiveError("");
+                            void handleDeleteGamePermanentlyById(game.id);
+                          }}
+                          disabled={isDeletingPermanently}
+                        >
+                          {isDeletingPermanently && selectedGameId === game.id
+                            ? "Suppression..."
+                            : "Supprimer"}
+                        </button>
+                      </div>
+                    </article>
                   ))}
                 </div>
               ) : (
@@ -501,105 +547,25 @@ export default function HomePage() {
           ) : null}
         </div>
 
-        <div className="surface span-5">
+        <div className="surface span-12">
           <div className="section-header">
             <div>
-              <p className="section-kicker">Acces</p>
-              <h2 className="section-title">
-                {selectedGame?.archived ? "Gestion de l'archive" : "Acceder ou gerer"}
-              </h2>
+              <p className="section-kicker">Navigation</p>
+              <h2 className="section-title">Ouverture rapide</h2>
+              <p className="section-copy">
+                Chaque carte GN propose maintenant directement ses actions principales pour eviter
+                un panneau d'explication trop long.
+              </p>
             </div>
           </div>
-          {selectedGame ? (
-            <div className="form-stack">
-              {!selectedGame.archived ? (
-                <>
-                  <form className="form-stack" onSubmit={handleOpenGame}>
-                    <div className="detail-block">
-                      <h3>{selectedGame.name}</h3>
-                      <p>
-                        {isAuthenticated
-                          ? "Ce GN est rattache a ton compte. Tu peux y entrer directement, ou ouvrir sa page de gestion si tu en es admin."
-                          : "Connecte-toi avec un compte orga membre de ce GN pour l'ouvrir."}
-                      </p>
-                    </div>
-                    {archiveError ? <div className="form-error">{archiveError}</div> : null}
-                    <div className="form-actions">
-                      <button
-                        type="submit"
-                        className="button-primary"
-                        disabled={isOpening || !isAuthenticated}
-                      >
-                        {isOpening ? "Ouverture..." : "Ouvrir l'espace"}
-                      </button>
-                      {selectedGame.role === "admin" ? (
-                        <Link
-                          href={`/games/${selectedGame.id}/manage`}
-                          className="button-secondary button-secondary-light"
-                        >
-                          Gestion
-                        </Link>
-                      ) : null}
-                    </div>
-                  </form>
-                  {selectedGame.role === "admin" ? (
-                    <div className="detail-block">
-                      <h3>Page de gestion dediee</h3>
-                      <p>
-                        Le renommage du GN, la gestion des membres et l'archivage sont maintenant
-                        regroupes dans une page de gestion unique.
-                      </p>
-                    </div>
-                  ) : null}
-                </>
-              ) : (
-                <div className="form-stack admin-stack">
-                  <div className="detail-block admin-block">
-                    <h3>{selectedGame.name}</h3>
-                    <p>
-                      Ce GN est archive. Sa restauration et sa suppression definitive sont
-                      reservees au super-admin.
-                    </p>
-                  </div>
-                  {archiveError ? <div className="form-error">{archiveError}</div> : null}
-                  {isSuperAdmin ? (
-                    <div className="form-actions form-actions-column">
-                      <button
-                        type="button"
-                        className="button-primary"
-                        onClick={() => {
-                          void handleRestoreGame();
-                        }}
-                        disabled={isRestoring}
-                      >
-                        {isRestoring ? "Restauration..." : "Restaurer le GN"}
-                      </button>
-                      <button
-                        type="button"
-                        className="button-danger"
-                        onClick={() => {
-                          void handleDeleteGamePermanently();
-                        }}
-                        disabled={isDeletingPermanently}
-                      >
-                        {isDeletingPermanently
-                          ? "Suppression..."
-                          : "Supprimer definitivement"}
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="empty-state">
-                      Cette archive ne peut etre geree que depuis le compte super-admin.
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="empty-state">
-              Selectionner un GN dans la liste pour l'ouvrir avec ton compte orga.
-            </div>
-          )}
+          {archiveError ? <div className="form-error">{archiveError}</div> : null}
+          <div className="detail-block">
+            <h3>Repere rapide</h3>
+            <p>
+              Acceder a l'espace ouvre directement le GN. Gestion apparait seulement pour les
+              admins du GN et regroupe le renommage, les membres et l'archivage.
+            </p>
+          </div>
         </div>
       </section>
     </>
