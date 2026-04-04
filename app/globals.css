@@ -634,7 +634,7 @@ a.list-item:focus-visible {
 
 .workspace-card {
   display: grid;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
   padding: 18px;
   text-align: left;
@@ -666,6 +666,18 @@ a.list-item:focus-visible {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap;
+}
+
+.workspace-card-summary {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.workspace-card-actions {
+  margin-top: 4px;
 }
 
 .list-item h3,
@@ -1583,6 +1595,16 @@ a.list-item:focus-visible {
     grid-template-columns: 1fr;
   }
 
+  .public-shell {
+    width: min(100% - 24px, var(--max-width));
+    margin: 12px auto;
+  }
+
+  .public-frame {
+    padding: 24px;
+    border-radius: 24px;
+  }
+
   .sidebar {
     position: static;
     min-height: auto;
@@ -1638,6 +1660,10 @@ a.list-item:focus-visible {
     grid-template-columns: 1fr;
   }
 
+  .page-hero {
+    gap: 16px;
+  }
+
   .hero-card {
     padding: 22px;
   }
@@ -1652,6 +1678,14 @@ a.list-item:focus-visible {
 
   .hero-actions {
     gap: 10px;
+  }
+
+  .insight-column {
+    gap: 12px;
+  }
+
+  .section-header {
+    align-items: flex-start;
   }
 
   .create-panel-header {
@@ -1681,6 +1715,24 @@ a.list-item:focus-visible {
   .span-8,
   .span-12 {
     grid-column: 1 / -1;
+  }
+
+  .home-stats-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .home-stats-row > :last-child {
+    grid-column: 1 / -1;
+  }
+
+  .workspace-card-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .workspace-card-actions > * {
+    width: 100%;
   }
 
   .calendar-topbar {
@@ -1731,7 +1783,13 @@ a.list-item:focus-visible {
     margin: 8px auto;
   }
 
+  .public-shell {
+    width: min(100% - 16px, var(--max-width));
+    margin: 8px auto;
+  }
+
   .page-frame,
+  .public-frame,
   .sidebar {
     padding: 18px;
     border-radius: 22px;
@@ -1811,6 +1869,18 @@ a.list-item:focus-visible {
     padding: 18px;
   }
 
+  .page-hero {
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .hero-copy,
+  .section-copy {
+    margin-top: 12px;
+    font-size: 0.98rem;
+    line-height: 1.55;
+  }
+
   .hero-title,
   .section-title,
   .brand-title {
@@ -1840,6 +1910,18 @@ a.list-item:focus-visible {
   .timeline-event,
   .workspace-card {
     padding: 12px 14px;
+  }
+
+  .workspace-card-header {
+    align-items: flex-start;
+  }
+
+  .workspace-card-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-card-summary {
+    font-size: 0.95rem;
   }
 
   .timeline-continuation {

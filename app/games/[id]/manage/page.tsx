@@ -457,7 +457,7 @@ export default function ManageGamePage() {
               </div>
             </div>
             {canManageArchive ? (
-              <div className="form-actions form-actions-column">
+              <div className="form-actions form-actions-column manage-archive-actions">
                 <button type="button" className="button-primary" onClick={() => void handleRestoreArchive()} disabled={isRestoring}>
                   {isRestoring ? "Restauration..." : "Restaurer le GN"}
                 </button>
@@ -615,12 +615,12 @@ export default function ManageGamePage() {
                           </h3>
                           <span className="badge">{member.membership.role}</span>
                         </div>
-                        <p>
+                        <p className="workspace-card-summary">
                           {member.profile?.id === authUser?.id
                             ? "Compte actuellement connecte sur ce navigateur."
                             : "Compte orga rattache a ce GN."}
                         </p>
-                        <div className="form-actions">
+                        <div className="form-actions workspace-card-actions">
                           <select
                             value={member.membership.role}
                             onChange={(event) =>

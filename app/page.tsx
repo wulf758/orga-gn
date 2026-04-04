@@ -503,7 +503,7 @@ export default function HomePage() {
         }
       />
 
-      <section className="stats-row">
+      <section className="stats-row home-stats-row">
         <div className="stat-block">
           <p className="stat-value">{activeGames.length}</p>
           <p className="stat-label">GN actifs</p>
@@ -549,7 +549,9 @@ export default function HomePage() {
               {activeGames.map((game) => (
                 <article
                   key={game.id}
-                  className={`workspace-card${selectedGameId === game.id ? " active" : ""}`}
+                  className={`workspace-card home-game-card${
+                    selectedGameId === game.id ? " active" : ""
+                  }`}
                   onClick={() => {
                     setSelectedGameId(game.id);
                     setArchiveError("");
@@ -577,11 +579,11 @@ export default function HomePage() {
                       <span className="status-pill success">ouvert</span>
                     ) : null}
                   </div>
-                  <p>
+                  <p className="workspace-card-summary">
                     {game.characterCount} personnages, {game.plotCount} intrigues,{" "}
                     {game.kraftCount} krafts suivis.
                   </p>
-                  <div className="form-actions">
+                  <div className="form-actions workspace-card-actions">
                     <button
                       type="button"
                       className="button-primary"
@@ -663,14 +665,14 @@ export default function HomePage() {
                         <h3>{game.name}</h3>
                         <span className="badge">Archive</span>
                       </div>
-                      <p>
+                      <p className="workspace-card-summary">
                         Archive le{" "}
                         {game.archivedAt
                           ? new Date(game.archivedAt).toLocaleDateString("fr-FR")
                           : "date inconnue"}
                         .
                       </p>
-                      <div className="form-actions">
+                      <div className="form-actions workspace-card-actions">
                         <button
                           type="button"
                           className="button-primary"
@@ -743,12 +745,14 @@ export default function HomePage() {
                             {isOwnAccount ? <span className="status-pill success">toi</span> : null}
                           </div>
                         </div>
-                        <p>{account.email ?? "Email indisponible dans l'annuaire."}</p>
-                        <p>
+                        <p className="workspace-card-summary">
+                          {account.email ?? "Email indisponible dans l'annuaire."}
+                        </p>
+                        <p className="workspace-card-summary">
                           {account.activeGameCount} GN actifs, {account.archivedGameCount} GN
                           archives, {account.gameCount} acces au total.
                         </p>
-                        <div className="form-actions">
+                        <div className="form-actions workspace-card-actions">
                           <button
                             type="button"
                             className="button-danger"
