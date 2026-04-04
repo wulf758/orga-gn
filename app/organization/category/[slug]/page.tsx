@@ -10,6 +10,7 @@ import { PageHero } from "@/components/page-hero";
 import { StatusPill } from "@/components/status-pill";
 import { TagBadge } from "@/components/tag-badge";
 import { formatDateLabel, formatReminder } from "@/lib/date-utils";
+import { buildDeleteConfirmation } from "@/lib/ui-copy";
 
 export default function OrganizationCategoryPage() {
   const params = useParams<{ slug: string }>();
@@ -57,7 +58,16 @@ export default function OrganizationCategoryPage() {
   }
 
   function handleCategoryDelete() {
-    if (!window.confirm(`Supprimer la categorie "${currentCategory.title}" et ses taches ?`)) return;
+    if (
+      !window.confirm(
+        buildDeleteConfirmation({
+          entityLabel: "la categorie",
+          name: currentCategory.title,
+          consequence: "Les taches de cette categorie seront egalement supprimees."
+        })
+      )
+    )
+      return;
     deleteCategory("organization", currentCategory.slug);
     router.push("/organization");
   }
@@ -119,7 +129,7 @@ export default function OrganizationCategoryPage() {
                 <textarea id="org-category-edit-summary" value={summary} onChange={(e) => setSummary(e.target.value)} />
               </div>
               <div className="form-actions">
-                <button type="submit" className="button-primary">Modifier la categorie</button>
+                <button type="submit" className="button-primary">Enregistrer les modifications</button>
               </div>
             </form>
           </CreatePanel>
@@ -152,7 +162,7 @@ export default function OrganizationCategoryPage() {
                 </div>
               </Link>
             ))}
-            {!tasks.length ? <div className="empty-state">Aucune tache dans cette categorie.</div> : null}
+            {!tasks.length ? <div className="empty-state">Aucune tache dans cette categorie pour le moment.</div> : null}
           </div>
         </div>
 
@@ -174,12 +184,12 @@ export default function OrganizationCategoryPage() {
                 </div>
               </article>
             ))}
-            {!deadlines.length ? <div className="empty-state">Aucune deadline liee a cette categorie.</div> : null}
+            {!deadlines.length ? <div className="empty-state">Aucune deadline liee a cette categorie pour le moment.</div> : null}
           </div>
         </div>
 
         <div className="surface span-6">
-          <CreatePanel title="Creer une tache" description="Creation d'une action dans cette categorie.">
+          <CreatePanel title="Creer une tache" description="Ajoute une action dans cette categorie.">
             <form className="form-stack" onSubmit={handleTaskCreate}>
               <div className="field">
                 <label htmlFor="org-task-title">Titre</label>
@@ -202,14 +212,14 @@ export default function OrganizationCategoryPage() {
                 </select>
               </div>
               <div className="form-actions">
-                <button type="submit" className="button-primary">Ajouter la tache</button>
+                <button type="submit" className="button-primary">Creer la tache</button>
               </div>
             </form>
           </CreatePanel>
         </div>
 
         <div className="surface span-6">
-          <CreatePanel title="Creer une deadline" description="Creation d'une echeance pour cette categorie.">
+          <CreatePanel title="Creer une deadline" description="Ajoute une echeance a cette categorie.">
             <form className="form-stack" onSubmit={handleDeadlineCreate}>
               <div className="field">
                 <label htmlFor="org-deadline-title">Titre</label>
@@ -228,7 +238,7 @@ export default function OrganizationCategoryPage() {
                 </select>
               </div>
               <div className="form-actions">
-                <button type="submit" className="button-primary">Ajouter la deadline</button>
+                <button type="submit" className="button-primary">Creer la deadline</button>
               </div>
             </form>
           </CreatePanel>

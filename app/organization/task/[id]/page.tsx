@@ -11,6 +11,7 @@ import { StatusPill } from "@/components/status-pill";
 import { TagBadge } from "@/components/tag-badge";
 import { TagPicker } from "@/components/tag-picker";
 import { formatDateLabel, formatReminder } from "@/lib/date-utils";
+import { buildDeleteConfirmation } from "@/lib/ui-copy";
 
 export default function OrganizationTaskDetailPage() {
   const params = useParams<{ id: string }>();
@@ -78,7 +79,7 @@ export default function OrganizationTaskDetailPage() {
   }
 
   function handleDelete() {
-    if (!window.confirm(`Supprimer la fiche "${currentTask.title}" ?`)) return;
+    if (!window.confirm(buildDeleteConfirmation({ entityLabel: "la fiche organisation", name: currentTask.title }))) return;
     deleteTask(currentTask.id);
     router.push(`/organization/category/${currentTask.categorySlug}`);
   }

@@ -9,6 +9,7 @@ import { CreatePanel } from "@/components/create-panel";
 import { PageHero } from "@/components/page-hero";
 import { StatusPill } from "@/components/status-pill";
 import { TagBadge } from "@/components/tag-badge";
+import { buildDeleteConfirmation } from "@/lib/ui-copy";
 
 export default function PlotCategoryPage() {
   const params = useParams<{ slug: string }>();
@@ -35,7 +36,16 @@ export default function PlotCategoryPage() {
   }
 
   function handleCategoryDelete() {
-    if (!window.confirm(`Supprimer la categorie "${currentCategory.title}" et ses intrigues ?`)) return;
+    if (
+      !window.confirm(
+        buildDeleteConfirmation({
+          entityLabel: "la categorie",
+          name: currentCategory.title,
+          consequence: "Toutes les intrigues de cette categorie seront egalement supprimees."
+        })
+      )
+    )
+      return;
     deleteCategory("plots", currentCategory.slug);
     router.push("/plots");
   }
@@ -80,7 +90,7 @@ export default function PlotCategoryPage() {
                 <textarea id="plot-category-edit-summary" value={summary} onChange={(e) => setSummary(e.target.value)} />
               </div>
               <div className="form-actions">
-                <button type="submit" className="button-primary">Modifier la categorie</button>
+                <button type="submit" className="button-primary">Enregistrer les modifications</button>
               </div>
             </form>
           </CreatePanel>
@@ -113,12 +123,12 @@ export default function PlotCategoryPage() {
                 </div>
               </Link>
             ))}
-            {!plots.length ? <div className="empty-state">Aucune intrigue dans cette categorie.</div> : null}
+            {!plots.length ? <div className="empty-state">Aucune intrigue dans cette categorie pour le moment.</div> : null}
           </div>
         </div>
 
         <div className="detail-grid">
-          <CreatePanel title="Creer une intrigue" description="Creation d'une intrigue dans cette categorie.">
+          <CreatePanel title="Creer une intrigue" description="Ajoute une intrigue dans cette categorie.">
             <form className="form-stack" onSubmit={handlePlotCreate}>
               <div className="field">
                 <label htmlFor="plot-title-create">Titre</label>
@@ -137,7 +147,7 @@ export default function PlotCategoryPage() {
                 </select>
               </div>
               <div className="form-actions">
-                <button type="submit" className="button-primary">Ajouter l'intrigue</button>
+                <button type="submit" className="button-primary">Creer l'intrigue</button>
               </div>
             </form>
           </CreatePanel>

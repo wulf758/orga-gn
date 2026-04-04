@@ -9,6 +9,7 @@ import { PageHero } from "@/components/page-hero";
 import { StatusPill } from "@/components/status-pill";
 import { TagBadge } from "@/components/tag-badge";
 import { TagPicker } from "@/components/tag-picker";
+import { buildDeleteConfirmation } from "@/lib/ui-copy";
 
 const KRAFT_STATUSES = ["A commencer", "A finir", "Fini"] as const;
 
@@ -47,7 +48,7 @@ export default function KraftDetailPage() {
 
   function handleDelete() {
     if (!item) return;
-    if (!window.confirm(`Supprimer le kraft "${item.title}" ?`)) return;
+    if (!window.confirm(buildDeleteConfirmation({ entityLabel: "le kraft", name: item.title }))) return;
     deleteKraftItem(item.id);
     router.push("/kraft");
   }
@@ -90,7 +91,7 @@ export default function KraftDetailPage() {
                     <TagBadge key={tag} tag={tag} definitions={data.tagsRegistry} />
                   ))
                 ) : (
-                  <p>Aucun tag pour l'instant.</p>
+                  <p>Aucun tag pour le moment.</p>
                 )}
               </div>
             </div>
@@ -105,7 +106,7 @@ export default function KraftDetailPage() {
               <span className="chip">Edition du kraft</span>
               <div className="note-edit-actions">
                 <button type="submit" className="button-primary">
-                  Enregistrer
+                  Enregistrer les modifications
                 </button>
               </div>
             </div>

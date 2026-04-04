@@ -11,6 +11,7 @@ import { TagPicker } from "@/components/tag-picker";
 import { useAppData } from "@/components/app-data-provider";
 import { formatDateLabel } from "@/lib/date-utils";
 import { StoryboardCard, StoryboardScene } from "@/lib/types";
+import { buildDeleteConfirmation } from "@/lib/ui-copy";
 
 function makeEditableCards(count: number, currentCards: StoryboardCard[] = []) {
   return Array.from({ length: count }, (_, index) => ({
@@ -83,7 +84,7 @@ export default function StoryboardSceneDetailPage() {
   }
 
   function handleDelete() {
-    if (!window.confirm(`Supprimer la scene "${currentScene.title}" ?`)) return;
+    if (!window.confirm(buildDeleteConfirmation({ entityLabel: "la scene", name: currentScene.title }))) return;
     deleteStoryboardScene(currentScene.id);
     router.push("/storyboard");
   }
@@ -138,7 +139,7 @@ export default function StoryboardSceneDetailPage() {
                     <TagBadge key={tag} tag={tag} definitions={data.tagsRegistry} />
                   ))
                 ) : (
-                  <p>Aucun tag pour l'instant.</p>
+                  <p>Aucun tag pour le moment.</p>
                 )}
               </div>
             </div>
@@ -153,7 +154,7 @@ export default function StoryboardSceneDetailPage() {
               <span className="chip">Edition de scene</span>
               <div className="note-edit-actions">
                 <button type="submit" className="button-primary">
-                  Enregistrer
+                  Enregistrer les modifications
                 </button>
               </div>
             </div>

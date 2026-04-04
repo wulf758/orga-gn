@@ -9,6 +9,7 @@ import { PageHero } from "@/components/page-hero";
 import { RichTextPreview } from "@/components/rich-text-preview";
 import { TagBadge } from "@/components/tag-badge";
 import { TagPicker } from "@/components/tag-picker";
+import { buildDeleteConfirmation } from "@/lib/ui-copy";
 
 function toLines(value: string) {
   return value
@@ -90,7 +91,7 @@ export default function CharacterDetailPage() {
   }
 
   function handleDelete() {
-    if (!window.confirm(`Supprimer la fiche "${currentCharacter.name}" ?`)) return;
+    if (!window.confirm(buildDeleteConfirmation({ entityLabel: "la fiche personnage", name: currentCharacter.name }))) return;
     deleteCharacter(currentCharacter.id);
     router.push("/characters");
   }
@@ -133,7 +134,7 @@ export default function CharacterDetailPage() {
             </div>
             <div className="detail-block">
               <h3>Joueur</h3>
-              <p>{currentCharacter.playerNotes?.trim() || "Aucune contrainte renseignee."}</p>
+              <p>{currentCharacter.playerNotes?.trim() || "Aucune information joueur renseignee pour le moment."}</p>
             </div>
           </div>
         }
@@ -250,7 +251,7 @@ export default function CharacterDetailPage() {
         <div className="surface-grid">
           <div className="detail-block span-12">
             <h3>Joueur / contraintes</h3>
-            <p>{currentCharacter.playerNotes?.trim() || "Aucune contrainte renseignee pour l'instant."}</p>
+            <p>{currentCharacter.playerNotes?.trim() || "Aucune information joueur renseignee pour le moment."}</p>
           </div>
 
           <div className="detail-block span-6">
@@ -262,7 +263,7 @@ export default function CharacterDetailPage() {
                 ))}
               </ul>
             ) : (
-              <p>Aucun objectif saisi pour l'instant.</p>
+              <p>Aucun objectif saisi pour le moment.</p>
             )}
           </div>
 
@@ -275,7 +276,7 @@ export default function CharacterDetailPage() {
                 ))}
               </ul>
             ) : (
-              <p>Aucun secret saisi pour l'instant.</p>
+              <p>Aucun secret saisi pour le moment.</p>
             )}
           </div>
         </div>

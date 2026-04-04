@@ -12,6 +12,7 @@ import {
   isSystemTagSection,
   normalizeTagLabel
 } from "@/lib/tags";
+import { buildDeleteConfirmation } from "@/lib/ui-copy";
 
 export default function TagsPage() {
   const {
@@ -193,7 +194,7 @@ export default function TagsPage() {
                 </div>
                 <div className="form-actions">
                   <button type="submit" className="button-primary">
-                    {editingSectionId ? "Enregistrer la section" : "Ajouter la section"}
+                    {editingSectionId ? "Enregistrer les modifications" : "Creer la section"}
                   </button>
                   {editingSectionId ? (
                     <>
@@ -203,7 +204,7 @@ export default function TagsPage() {
                         onClick={() => {
                           const target = data.tagSections.find((entry) => entry.id === editingSectionId);
                           if (!target) return;
-                          if (!window.confirm(`Supprimer la section "${target.label}" ?`)) return;
+                          if (!window.confirm(buildDeleteConfirmation({ entityLabel: "la section", name: target.label }))) return;
                           deleteTagSection(target.id);
                           resetSectionForm();
                         }}
@@ -249,7 +250,7 @@ export default function TagsPage() {
                 </div>
                 <div className="form-actions">
                   <button type="submit" className="button-primary">
-                    {editingId ? "Enregistrer le tag" : "Ajouter le tag"}
+                    {editingId ? "Enregistrer les modifications" : "Creer le tag"}
                   </button>
                   {editingId ? (
                     <>
@@ -259,7 +260,7 @@ export default function TagsPage() {
                         onClick={() => {
                           const target = data.tagsRegistry.find((entry) => entry.id === editingId);
                           if (!target) return;
-                          if (!window.confirm(`Supprimer le tag "${target.label}" ?`)) return;
+                          if (!window.confirm(buildDeleteConfirmation({ entityLabel: "le tag", name: target.label }))) return;
                           deleteTagDefinition(target.id);
                           resetForm();
                         }}
@@ -345,7 +346,7 @@ export default function TagsPage() {
                           </div>
                         </button>
                       )}
-                      <p>{definition.description || "Aucune description pour l'instant."}</p>
+                      <p>{definition.description || "Aucune description pour le moment."}</p>
                       {!isSystemTagLabel(definition.label) ? (
                         <div className="form-actions">
                           <button type="button" className="button-primary" onClick={() => handleEdit(definition.id)}>
@@ -355,7 +356,7 @@ export default function TagsPage() {
                             type="button"
                             className="button-secondary-light"
                             onClick={() => {
-                              if (!window.confirm(`Supprimer le tag "${definition.label}" ?`)) return;
+                              if (!window.confirm(buildDeleteConfirmation({ entityLabel: "le tag", name: definition.label }))) return;
                               deleteTagDefinition(definition.id);
                               if (editingId === definition.id) {
                                 resetForm();
@@ -369,7 +370,7 @@ export default function TagsPage() {
                     </article>
                   ))
                 ) : (
-                  <div className="empty-state">Aucun tag dans cette section pour l'instant.</div>
+                  <div className="empty-state">Aucun tag dans cette section pour le moment.</div>
                 )}
               </div>
             </section>

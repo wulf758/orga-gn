@@ -276,8 +276,8 @@ export default function TimelinePage() {
         }
         aside={
           <CreatePanel
-            title="Ajouter un jour"
-            description="Creation d'une nouvelle journee dans la timeline du GN."
+            title="Creer un jour"
+            description="Ajoute une nouvelle journee dans la timeline du GN."
           >
             <form className="form-stack" onSubmit={handleDayCreate}>
               <div className="field">
@@ -300,7 +300,7 @@ export default function TimelinePage() {
               </div>
               <div className="form-actions">
                 <button type="submit" className="button-primary">
-                  Ajouter le jour
+                  Creer le jour
                 </button>
               </div>
             </form>
@@ -355,7 +355,7 @@ export default function TimelinePage() {
               </div>
               <div className="form-actions">
                 <button type="submit" className="button-primary">
-                  Enregistrer le jour
+                  Enregistrer les modifications
                 </button>
                 <button type="button" className="button-secondary" onClick={handleDayDelete}>
                   Supprimer le jour
@@ -364,15 +364,15 @@ export default function TimelinePage() {
             </form>
           ) : (
             <div className="empty-state" style={{ marginTop: 18 }}>
-              Aucun jour de timeline pour l'instant.
+              Aucun jour de timeline pour le moment.
             </div>
           )}
         </div>
 
         <div className="surface span-8">
           <CreatePanel
-            title={editingEntryId ? "Modifier un bloc" : "Ajouter un bloc"}
-            description="Creation et edition des evenements sur la journee selectionnee."
+            title={editingEntryId ? "Modifier un bloc" : "Creer un bloc"}
+            description="Ajoute ou modifie un evenement sur la journee selectionnee."
           >
             <form className="form-stack" onSubmit={handleEntrySubmit}>
               <div className="field">
@@ -433,7 +433,7 @@ export default function TimelinePage() {
               </div>
               <div className="form-actions">
                 <button type="submit" className="button-primary">
-                  {editingEntryId ? "Enregistrer le bloc" : "Ajouter le bloc"}
+                  {editingEntryId ? "Enregistrer les modifications" : "Creer le bloc"}
                 </button>
                 {editingEntryId ? (
                   <button type="button" className="button-secondary" onClick={resetEntryForm}>
@@ -567,7 +567,7 @@ export default function TimelinePage() {
               ))
             ) : (
               <div className="empty-state">
-                Aucun evenement sur cette journee pour l'instant.
+                Aucun evenement sur cette journee pour le moment.
               </div>
             )}
           </div>

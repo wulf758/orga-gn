@@ -58,7 +58,7 @@ export default function NewStoryboardScenePage() {
               <span className="chip">Nouvelle scene</span>
               <div className="note-edit-actions">
                 <button type="submit" className="button-primary">
-                  Creer la scene
+                  Creer cette scene
                 </button>
               </div>
             </div>

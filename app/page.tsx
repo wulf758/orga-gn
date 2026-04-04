@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useAppData } from "@/components/app-data-provider";
 import { CreatePanel } from "@/components/create-panel";
 import { PageHero } from "@/components/page-hero";
+import { buildDeleteConfirmation } from "@/lib/ui-copy";
 
 export default function HomePage() {
   const {
@@ -249,7 +250,10 @@ export default function HomePage() {
     if (!selectedGame || !selectedGame.archived || isDeletingPermanently) return;
 
     const confirmed = window.confirm(
-      `Supprimer definitivement le GN "${selectedGame.name}" ? Cette action est irreversible.`
+      buildDeleteConfirmation({
+        entityLabel: "definitivement le GN",
+        name: selectedGame.name
+      })
     );
 
     if (!confirmed) return;
@@ -345,7 +349,7 @@ export default function HomePage() {
                       !newGamePassword.trim()
                     }
                   >
-                    {isCreating ? "Creation..." : "Creer le GN"}
+                    {isCreating ? "Creation..." : "Creer cet espace"}
                   </button>
                 </div>
               </form>
@@ -464,7 +468,7 @@ export default function HomePage() {
             </div>
           ) : isReady ? (
             <div className="empty-state">
-              Aucun GN actif pour l'instant. La creation d'un premier espace est
+              Aucun GN actif pour le moment. La creation d'un premier espace est
               disponible a droite.
             </div>
           ) : (
@@ -513,7 +517,7 @@ export default function HomePage() {
                   ))}
                 </div>
               ) : (
-                <div className="empty-state">Aucun GN archive pour l'instant.</div>
+                <div className="empty-state">Aucun GN archive pour le moment.</div>
               )}
             </div>
           ) : null}

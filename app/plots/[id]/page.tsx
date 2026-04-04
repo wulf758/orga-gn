@@ -10,6 +10,7 @@ import { RichTextPreview } from "@/components/rich-text-preview";
 import { StatusPill } from "@/components/status-pill";
 import { TagBadge } from "@/components/tag-badge";
 import { TagPicker } from "@/components/tag-picker";
+import { buildDeleteConfirmation } from "@/lib/ui-copy";
 
 export default function PlotDetailPage() {
   const params = useParams<{ id: string }>();
@@ -51,7 +52,7 @@ export default function PlotDetailPage() {
   }
 
   function handleDelete() {
-    if (!window.confirm(`Supprimer l'intrigue "${currentPlot.title}" ?`)) return;
+    if (!window.confirm(buildDeleteConfirmation({ entityLabel: "l'intrigue", name: currentPlot.title }))) return;
     deletePlot(currentPlot.id);
     router.push(`/plots/category/${currentPlot.categorySlug}`);
   }
@@ -225,7 +226,7 @@ export default function PlotDetailPage() {
                 ))}
               </ul>
             ) : (
-              <p>Aucun temps narratif saisi pour l'instant.</p>
+              <p>Aucun temps narratif saisi pour le moment.</p>
             )}
           </div>
 
@@ -239,7 +240,7 @@ export default function PlotDetailPage() {
                   </Link>
                 ))
               ) : (
-                <p>Aucun personnage relie pour l'instant.</p>
+                <p>Aucun personnage relie pour le moment.</p>
               )}
             </div>
           </div>

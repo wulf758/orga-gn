@@ -11,6 +11,7 @@ import { RichTextPreview } from "@/components/rich-text-preview";
 import { TagBadge } from "@/components/tag-badge";
 import { TagPicker } from "@/components/tag-picker";
 import { serializeDocumentContent } from "@/lib/document-content";
+import { buildDeleteConfirmation } from "@/lib/ui-copy";
 
 export default function DocumentDetailPage() {
   const params = useParams<{ slug: string }>();
@@ -60,10 +61,16 @@ export default function DocumentDetailPage() {
   }
 
   function handleDelete() {
-    const label =
-      currentDocument.kind === "folder"
-        ? `Supprimer le dossier "${currentDocument.title}" et tout son contenu ?`
-        : `Supprimer la note "${currentDocument.title}" ?`;
+    const label = currentDocument.kind === "folder"
+      ? buildDeleteConfirmation({
+          entityLabel: "le dossier",
+          name: currentDocument.title,
+          consequence: "Tout son contenu sera egalement supprime."
+        })
+      : buildDeleteConfirmation({
+          entityLabel: "la note",
+          name: currentDocument.title
+        });
 
     if (!window.confirm(label)) {
       return;
@@ -193,7 +200,7 @@ export default function DocumentDetailPage() {
                 </div>
                 <div className="form-actions">
                   <button type="submit" className="button-primary">
-                    Modifier le dossier
+                    Enregistrer les modifications
                   </button>
                 </div>
               </form>
@@ -251,7 +258,7 @@ export default function DocumentDetailPage() {
             ) : null}
 
             {!childFolders.length && !childNotes.length ? (
-              <div className="empty-state">Ce dossier est vide pour l'instant.</div>
+              <div className="empty-state">Ce dossier est vide pour le moment.</div>
             ) : null}
           </div>
 
@@ -279,7 +286,7 @@ export default function DocumentDetailPage() {
                 </div>
                 <div className="form-actions">
                   <button type="submit" className="button-primary">
-                    Ajouter la note
+                    Creer la note
                   </button>
                 </div>
               </form>

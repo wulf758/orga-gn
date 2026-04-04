@@ -9,6 +9,7 @@ import { CreatePanel } from "@/components/create-panel";
 import { PageHero } from "@/components/page-hero";
 import { TagBadge } from "@/components/tag-badge";
 import { formatDateTimeLabel } from "@/lib/date-utils";
+import { buildDeleteConfirmation } from "@/lib/ui-copy";
 
 export default function MeetingCategoryPage() {
   const params = useParams<{ slug: string }>();
@@ -37,7 +38,16 @@ export default function MeetingCategoryPage() {
   }
 
   function handleCategoryDelete() {
-    if (!window.confirm(`Supprimer la categorie "${currentCategory.title}" et ses reunions ?`)) return;
+    if (
+      !window.confirm(
+        buildDeleteConfirmation({
+          entityLabel: "la categorie",
+          name: currentCategory.title,
+          consequence: "Les reunions de cette categorie seront egalement supprimees."
+        })
+      )
+    )
+      return;
     deleteCategory("meetings", currentCategory.slug);
     router.push("/meetings");
   }
@@ -86,7 +96,7 @@ export default function MeetingCategoryPage() {
                 <textarea id="meeting-category-edit-summary" value={summary} onChange={(e) => setSummary(e.target.value)} />
               </div>
               <div className="form-actions">
-                <button type="submit" className="button-primary">Modifier la categorie</button>
+                <button type="submit" className="button-primary">Enregistrer les modifications</button>
               </div>
             </form>
           </CreatePanel>
@@ -123,12 +133,12 @@ export default function MeetingCategoryPage() {
                 ) : null}
               </Link>
             ))}
-            {!meetings.length ? <div className="empty-state">Aucune reunion dans cette categorie.</div> : null}
+            {!meetings.length ? <div className="empty-state">Aucune reunion dans cette categorie pour le moment.</div> : null}
           </div>
         </div>
 
         <div className="detail-grid">
-          <CreatePanel title="Creer une reunion" description="Creation d'une nouvelle seance dans cette categorie.">
+          <CreatePanel title="Creer une reunion" description="Ajoute une nouvelle reunion dans cette categorie.">
             <form className="form-stack" onSubmit={handleMeetingCreate}>
               <div className="field">
                 <label htmlFor="meeting-title-create">Titre</label>
@@ -151,7 +161,7 @@ export default function MeetingCategoryPage() {
                 <textarea id="meeting-agenda-create" value={meetingAgenda} onChange={(e) => setMeetingAgenda(e.target.value)} />
               </div>
               <div className="form-actions">
-                <button type="submit" className="button-primary">Ajouter la reunion</button>
+                <button type="submit" className="button-primary">Creer la reunion</button>
               </div>
             </form>
           </CreatePanel>

@@ -82,7 +82,7 @@ export default function DocumentsPage() {
               </div>
               <div className="form-actions">
                 <button type="submit" className="button-primary">
-                  Ajouter le dossier
+                  Creer le dossier
                 </button>
               </div>
             </form>
@@ -120,6 +120,9 @@ export default function DocumentsPage() {
               </Link>
             );
           })}
+          {!rootFolders.length ? (
+            <div className="empty-state">Aucun dossier racine pour le moment.</div>
+          ) : null}
         </div>
       </section>
     </>

@@ -65,7 +65,7 @@ export default function NewCharacterPage() {
               <span className="chip">Nouvelle fiche</span>
               <div className="note-edit-actions">
                 <button type="submit" className="button-primary">
-                  Creer la fiche
+                  Creer le personnage
                 </button>
               </div>
             </div>

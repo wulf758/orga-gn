@@ -10,6 +10,7 @@ import { RichTextPreview } from "@/components/rich-text-preview";
 import { TagBadge } from "@/components/tag-badge";
 import { TagPicker } from "@/components/tag-picker";
 import { formatDateTimeLabel } from "@/lib/date-utils";
+import { buildDeleteConfirmation } from "@/lib/ui-copy";
 
 export default function MeetingDetailPage() {
   const params = useParams<{ id: string }>();
@@ -77,7 +78,7 @@ export default function MeetingDetailPage() {
   }
 
   function handleDelete() {
-    if (!window.confirm(`Supprimer la reunion "${currentMeeting.title}" ?`)) return;
+    if (!window.confirm(buildDeleteConfirmation({ entityLabel: "la reunion", name: currentMeeting.title }))) return;
     deleteMeeting(currentMeeting.id);
     router.push(`/meetings/category/${currentMeeting.categorySlug}`);
   }
@@ -186,7 +187,7 @@ export default function MeetingDetailPage() {
                     ))}
                   </ul>
                 ) : (
-                  <p>Aucun point saisi pour l'instant.</p>
+                  <p>Aucun point saisi pour le moment.</p>
                 )}
               </div>
               <div className="note-read-content">
