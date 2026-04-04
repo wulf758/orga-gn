@@ -426,6 +426,7 @@ a.list-item:hover {
 .button-danger:focus-visible,
 .sidebar-ghost-button:focus-visible,
 .sidebar-mobile-toggle:focus-visible,
+.create-panel-toggle:focus-visible,
 .brand-settings-button:focus-visible,
 .editor-button:focus-visible,
 .tag-toggle:focus-visible,
@@ -678,6 +679,30 @@ a.list-item:focus-visible {
 
 .detail-block {
   padding: 22px;
+}
+
+.create-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.create-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.create-panel-copy {
+  min-width: 0;
+}
+
+.create-panel-toggle {
+  display: none;
+}
+
+.create-panel-body {
+  display: block;
 }
 
 .detail-grid {
@@ -1612,6 +1637,11 @@ a.list-item:focus-visible {
     gap: 10px;
   }
 
+  .create-panel-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   .nav-description {
     font-size: 0.88rem;
   }
@@ -1724,6 +1754,38 @@ a.list-item:focus-visible {
     width: 100%;
   }
 
+  .create-panel {
+    gap: 0;
+  }
+
+  .create-panel-header {
+    gap: 12px;
+  }
+
+  .create-panel-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 40px;
+    padding: 0 14px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: rgba(255, 253, 248, 0.96);
+    color: var(--accent-deep);
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  .create-panel-body {
+    display: none;
+    margin-top: 16px;
+  }
+
+  .create-panel.is-expanded .create-panel-body {
+    display: block;
+  }
+
   .hero-card,
   .surface,
   .detail-block,
@@ -1793,6 +1855,13 @@ a.list-item:focus-visible {
   .note-content-editor {
     height: 48vh !important;
     min-height: 360px !important;
+  }
+
+  .create-panel-toggle:hover,
+  .create-panel-toggle:focus-visible {
+    box-shadow: 0 12px 28px rgba(54, 33, 12, 0.1);
+    transform: translateY(-1px);
+    outline: none;
   }
 
   .stats-row {
