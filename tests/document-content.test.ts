@@ -33,4 +33,27 @@ describe("document content helpers", () => {
       }
     ]);
   });
+
+  it("creates multiple paragraphs from blank-line-separated text", () => {
+    expect(
+      parseDocumentContent("## Scene\n\nPremier bloc.\n\nSecond bloc.", "Fallback")
+    ).toEqual([
+      {
+        heading: "Scene",
+        paragraphs: ["Premier bloc.", "Second bloc."]
+      }
+    ]);
+  });
+
+  it("reads bullets without creating empty paragraphs", () => {
+    expect(
+      parseDocumentContent("## Rappels\n\n- Torche\n- Clef", "Fallback")
+    ).toEqual([
+      {
+        heading: "Rappels",
+        paragraphs: [],
+        bullets: ["Torche", "Clef"]
+      }
+    ]);
+  });
 });

@@ -24,4 +24,14 @@ describe("timeline warning helpers", () => {
       })
     ).toBe('Supprimer le bloc "Ouverture" ?');
   });
+
+  it("mentions the linked storyboard scene when deleting a linked entry", () => {
+    const message = buildTimelineEntryDeletionWarning({
+      entryTitle: "Debut du conseil",
+      linkedSceneTitle: "Conseil de crise"
+    });
+
+    expect(message).toContain('Supprimer le bloc "Debut du conseil" ?');
+    expect(message).toContain('La scene storyboard "Conseil de crise" sera detachee');
+  });
 });
