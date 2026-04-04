@@ -57,6 +57,7 @@ npm run dev
 - `GN_INVITE_PASSWORD` : mot de passe d'invitation pour creer un nouveau GN
 - `GN_ADMIN_PASSWORD` : mot de passe reserve a l'administration des GN
 - `NEXT_PUBLIC_SUPABASE_URL` : URL du projet Supabase
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` : cle publique pour la future authentification utilisateur
 - `SUPABASE_SECRET_KEY` : cle serveur Supabase recommandee pour cette application
 - `SUPABASE_SERVICE_ROLE_KEY` : alternative legacy si tu utilises encore l'ancienne cle service role
 
@@ -74,7 +75,7 @@ Tu peux partir de `.env.example` pour creer ton propre `.env.local` en developpe
 1. creer un projet Supabase
 2. ouvrir l'editeur SQL
 3. executer le schema dans `supabase/schema.sql`
-4. renseigner `NEXT_PUBLIC_SUPABASE_URL` et `SUPABASE_SECRET_KEY`
+4. renseigner `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` et `SUPABASE_SECRET_KEY`
 5. si tu veux reprendre les donnees SQLite existantes, lancer `npm run supabase:migrate`
 6. relancer l'application
 
@@ -93,6 +94,21 @@ Tant que les variables Supabase ne sont pas definies, l'application continue d'u
 5. deployer
 
 Avec cette configuration, Vercel heberge l'application Next.js et Supabase remplace completement SQLite en production.
+
+## Fondations v1.0
+
+Le schema Supabase prepare maintenant la suite pour une authentification reelle :
+
+- `profiles` : profil utilisateur lie a `auth.users`
+- `game_memberships` : role par GN (`admin`, `orga`, `lecture`)
+
+Le modele cible est bien un role **par GN** :
+
+- un utilisateur peut etre `admin` sur son propre GN
+- `orga` sur un autre
+- `lecture` sur un troisieme
+
+La creation d'un GN devra ensuite attribuer automatiquement le role `admin` au createur.
 
 ## Etapes suivantes conseillees
 

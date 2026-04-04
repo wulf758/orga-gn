@@ -196,3 +196,21 @@ export type WorkspaceSummary = {
   archived: boolean;
   archivedAt?: string | null;
 };
+
+export type MembershipRole = "admin" | "orga" | "lecture";
+
+export type UserProfile = {
+  id: string;
+  displayName?: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type GameMembership = {
+  id: string;
+  gameId: string;
+  userId: string;
+  role: MembershipRole;
+  createdAt: string;
+  updatedAt: string;
+};

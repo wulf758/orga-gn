@@ -2,7 +2,13 @@ import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 
 import { getEmptyAppData } from "@/lib/data";
-import { AppData, WorkspaceSummary } from "@/lib/types";
+import {
+  AppData,
+  GameMembership,
+  MembershipRole,
+  UserProfile,
+  WorkspaceSummary
+} from "@/lib/types";
 
 type WorkspaceRow = {
   id: string;
@@ -31,8 +37,24 @@ type AdminSessionRow = {
   created_at: string;
 };
 
+type ProfileRow = {
+  id: string;
+  display_name: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type GameMembershipRow = {
+  id: string;
+  game_id: string;
+  user_id: string;
+  role: MembershipRole;
+  created_at: string;
+  updated_at: string;
+};
+
 type SqliteStatement = {
-  all: () => unknown[];
+  all: (...args: unknown[]) => unknown[];
   get: (...args: unknown[]) => unknown;
   run: (...args: unknown[]) => { changes: number };
 };
@@ -51,6 +73,8 @@ const WORKSPACE_SELECT =
   "id,name,password_hash,workspace_json,document_count,character_count,plot_count,kraft_count,created_at,updated_at,archived_at";
 const SESSION_SELECT = "token_hash,workspace_id,expires_at,created_at";
 const ADMIN_SESSION_SELECT = "token_hash,expires_at,created_at";
+const PROFILE_SELECT = "id,display_name,created_at,updated_at";
+const GAME_MEMBERSHIP_SELECT = "id,game_id,user_id,role,created_at,updated_at";
 
 function getDatabasePath() {
   const directory = join(process.cwd(), ".data");
@@ -107,6 +131,29 @@ function createSqliteDatabase() {
     );
 
     CREATE INDEX IF NOT EXISTS idx_admin_sessions_expires_at ON admin_sessions(expires_at);
+
+    CREATE TABLE IF NOT EXISTS profiles (
+      id TEXT PRIMARY KEY,
+      display_name TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS game_memberships (
+      id TEXT PRIMARY KEY,
+      game_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      role TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      UNIQUE (game_id, user_id),
+      FOREIGN KEY (game_id) REFERENCES workspaces(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_game_memberships_game_id ON game_memberships(game_id);
+    CREATE INDEX IF NOT EXISTS idx_game_memberships_user_id ON game_memberships(user_id);
+    CREATE INDEX IF NOT EXISTS idx_game_memberships_role ON game_memberships(role);
   `);
 
   const columns = database
@@ -162,6 +209,26 @@ function toSummary(row: WorkspaceRow): WorkspaceSummary {
   };
 }
 
+function toUserProfile(row: ProfileRow): UserProfile {
+  return {
+    id: row.id,
+    displayName: row.display_name,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function toGameMembership(row: GameMembershipRow): GameMembership {
+  return {
+    id: row.id,
+    gameId: row.game_id,
+    userId: row.user_id,
+    role: row.role,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
 function makeWorkspacePayload(data: AppData) {
   return {
     json: JSON.stringify(data),
@@ -209,6 +276,26 @@ function fromSupabaseAdminSession(row: Record<string, unknown>): AdminSessionRow
     token_hash: String(row.token_hash),
     expires_at: String(row.expires_at),
     created_at: String(row.created_at)
+  };
+}
+
+function fromSupabaseProfile(row: Record<string, unknown>): ProfileRow {
+  return {
+    id: String(row.id),
+    display_name: row.display_name ? String(row.display_name) : null,
+    created_at: String(row.created_at),
+    updated_at: String(row.updated_at)
+  };
+}
+
+function fromSupabaseGameMembership(row: Record<string, unknown>): GameMembershipRow {
+  return {
+    id: String(row.id),
+    game_id: String(row.game_id),
+    user_id: String(row.user_id),
+    role: String(row.role) as MembershipRole,
+    created_at: String(row.created_at),
+    updated_at: String(row.updated_at)
   };
 }
 
@@ -543,6 +630,114 @@ function sqliteWorkspaceNameExists(name: string, ignoreId?: string) {
   }
 
   return ignoreId ? existing.id !== ignoreId : true;
+}
+
+function sqliteGetProfileById(id: string) {
+  const database = getSqliteDatabase();
+  const statement = database.prepare(`
+    SELECT ${PROFILE_SELECT}
+    FROM profiles
+    WHERE id = ?
+    LIMIT 1
+  `);
+
+  return (statement.get(id) as ProfileRow | undefined) ?? null;
+}
+
+function sqliteUpsertProfile(input: { id: string; displayName?: string | null }) {
+  const database = getSqliteDatabase();
+  const existing = sqliteGetProfileById(input.id);
+  const timestamp = new Date().toISOString();
+
+  if (existing) {
+    database
+      .prepare(`
+        UPDATE profiles
+        SET display_name = ?, updated_at = ?
+        WHERE id = ?
+      `)
+      .run(input.displayName ?? null, timestamp, input.id);
+  } else {
+    database
+      .prepare(`
+        INSERT INTO profiles (id, display_name, created_at, updated_at)
+        VALUES (?, ?, ?, ?)
+      `)
+      .run(input.id, input.displayName ?? null, timestamp, timestamp);
+  }
+
+  return sqliteGetProfileById(input.id);
+}
+
+function sqliteListGameMemberships(gameId: string) {
+  const database = getSqliteDatabase();
+  const statement = database.prepare(`
+    SELECT ${GAME_MEMBERSHIP_SELECT}
+    FROM game_memberships
+    WHERE game_id = ?
+    ORDER BY created_at ASC
+  `);
+
+  return statement.all(gameId) as GameMembershipRow[];
+}
+
+function sqliteListUserMemberships(userId: string) {
+  const database = getSqliteDatabase();
+  const statement = database.prepare(`
+    SELECT ${GAME_MEMBERSHIP_SELECT}
+    FROM game_memberships
+    WHERE user_id = ?
+    ORDER BY created_at ASC
+  `);
+
+  return statement.all(userId) as GameMembershipRow[];
+}
+
+function sqliteGetGameMembership(gameId: string, userId: string) {
+  const database = getSqliteDatabase();
+  const statement = database.prepare(`
+    SELECT ${GAME_MEMBERSHIP_SELECT}
+    FROM game_memberships
+    WHERE game_id = ? AND user_id = ?
+    LIMIT 1
+  `);
+
+  return (statement.get(gameId, userId) as GameMembershipRow | undefined) ?? null;
+}
+
+function sqliteUpsertGameMembership(input: {
+  gameId: string;
+  userId: string;
+  role: MembershipRole;
+}) {
+  const database = getSqliteDatabase();
+  const existing = sqliteGetGameMembership(input.gameId, input.userId);
+  const timestamp = new Date().toISOString();
+
+  if (existing) {
+    database
+      .prepare(`
+        UPDATE game_memberships
+        SET role = ?, updated_at = ?
+        WHERE id = ?
+      `)
+      .run(input.role, timestamp, existing.id);
+  } else {
+    database
+      .prepare(`
+        INSERT INTO game_memberships (id, game_id, user_id, role, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `)
+      .run(`membership-${crypto.randomUUID()}`, input.gameId, input.userId, input.role, timestamp, timestamp);
+  }
+
+  return sqliteGetGameMembership(input.gameId, input.userId);
+}
+
+function sqliteDeleteGameMembership(id: string) {
+  const database = getSqliteDatabase();
+  const result = database.prepare("DELETE FROM game_memberships WHERE id = ?").run(id);
+  return result.changes > 0;
 }
 
 export async function listWorkspaces() {
@@ -887,6 +1082,131 @@ export async function getAdminSession(tokenHash: string) {
   const response = await supabaseFetch(`admin_sessions?${query}`);
   const rows = (await response.json()) as Array<Record<string, unknown>>;
   return rows[0] ? fromSupabaseAdminSession(rows[0]) : null;
+}
+
+export async function getProfileById(id: string) {
+  if (!isSupabaseEnabled()) {
+    const row = sqliteGetProfileById(id);
+    return row ? toUserProfile(row) : null;
+  }
+
+  const query = buildQuery({
+    select: PROFILE_SELECT,
+    id: `eq.${id}`,
+    limit: "1"
+  });
+  const response = await supabaseFetch(`profiles?${query}`);
+  const rows = (await response.json()) as Array<Record<string, unknown>>;
+  return rows[0] ? toUserProfile(fromSupabaseProfile(rows[0])) : null;
+}
+
+export async function upsertProfile(input: { id: string; displayName?: string | null }) {
+  if (!isSupabaseEnabled()) {
+    const row = sqliteUpsertProfile(input);
+    return row ? toUserProfile(row) : null;
+  }
+
+  const timestamp = new Date().toISOString();
+  const response = await supabaseFetch("profiles?select=id,display_name,created_at,updated_at", {
+    method: "POST",
+    headers: {
+      Prefer: "resolution=merge-duplicates,return=representation"
+    },
+    body: JSON.stringify({
+      id: input.id,
+      display_name: input.displayName ?? null,
+      updated_at: timestamp
+    })
+  });
+  const rows = (await response.json()) as Array<Record<string, unknown>>;
+  return rows[0] ? toUserProfile(fromSupabaseProfile(rows[0])) : null;
+}
+
+export async function listGameMemberships(gameId: string) {
+  if (!isSupabaseEnabled()) {
+    return sqliteListGameMemberships(gameId).map(toGameMembership);
+  }
+
+  const query = buildQuery({
+    select: GAME_MEMBERSHIP_SELECT,
+    game_id: `eq.${gameId}`,
+    order: "created_at.asc"
+  });
+  const response = await supabaseFetch(`game_memberships?${query}`);
+  const rows = (await response.json()) as Array<Record<string, unknown>>;
+  return rows.map((row) => toGameMembership(fromSupabaseGameMembership(row)));
+}
+
+export async function listUserMemberships(userId: string) {
+  if (!isSupabaseEnabled()) {
+    return sqliteListUserMemberships(userId).map(toGameMembership);
+  }
+
+  const query = buildQuery({
+    select: GAME_MEMBERSHIP_SELECT,
+    user_id: `eq.${userId}`,
+    order: "created_at.asc"
+  });
+  const response = await supabaseFetch(`game_memberships?${query}`);
+  const rows = (await response.json()) as Array<Record<string, unknown>>;
+  return rows.map((row) => toGameMembership(fromSupabaseGameMembership(row)));
+}
+
+export async function getGameMembership(gameId: string, userId: string) {
+  if (!isSupabaseEnabled()) {
+    const row = sqliteGetGameMembership(gameId, userId);
+    return row ? toGameMembership(row) : null;
+  }
+
+  const query = buildQuery({
+    select: GAME_MEMBERSHIP_SELECT,
+    game_id: `eq.${gameId}`,
+    user_id: `eq.${userId}`,
+    limit: "1"
+  });
+  const response = await supabaseFetch(`game_memberships?${query}`);
+  const rows = (await response.json()) as Array<Record<string, unknown>>;
+  return rows[0] ? toGameMembership(fromSupabaseGameMembership(rows[0])) : null;
+}
+
+export async function upsertGameMembership(input: {
+  gameId: string;
+  userId: string;
+  role: MembershipRole;
+}) {
+  if (!isSupabaseEnabled()) {
+    const row = sqliteUpsertGameMembership(input);
+    return row ? toGameMembership(row) : null;
+  }
+
+  const timestamp = new Date().toISOString();
+  const response = await supabaseFetch(
+    "game_memberships?select=id,game_id,user_id,role,created_at,updated_at",
+    {
+      method: "POST",
+      headers: {
+        Prefer: "resolution=merge-duplicates,return=representation"
+      },
+      body: JSON.stringify({
+        game_id: input.gameId,
+        user_id: input.userId,
+        role: input.role,
+        updated_at: timestamp
+      })
+    }
+  );
+  const rows = (await response.json()) as Array<Record<string, unknown>>;
+  return rows[0] ? toGameMembership(fromSupabaseGameMembership(rows[0])) : null;
+}
+
+export async function deleteGameMembership(id: string) {
+  if (!isSupabaseEnabled()) {
+    return sqliteDeleteGameMembership(id);
+  }
+
+  const query = buildQuery({ id: `eq.${id}` });
+  await supabaseFetch(`game_memberships?${query}`, { method: "DELETE" });
+  return true;
 }
 
 export function parseWorkspace(row: WorkspaceRow) {
