@@ -5,7 +5,10 @@ import { useMemo, useState } from "react";
 import { PageHero } from "@/components/page-hero";
 import { useAppData } from "@/components/app-data-provider";
 import { formatDateLabel, formatDateTimeLabel } from "@/lib/date-utils";
-import { getTagLabelsForSection } from "@/lib/tags";
+import {
+  getCharacterExportMeta,
+  getCharacterExportPlayerNotes
+} from "@/lib/export-helpers";
 
 type ExportKey =
   | "documents"
@@ -124,11 +127,6 @@ export default function ExportPage() {
     () => data.kraftItems.filter((item) => item.status === "Fini"),
     [data.kraftItems]
   );
-
-  function getCharacterFactions(tags: string[]) {
-    const factions = getTagLabelsForSection(tags, data.tagsRegistry, "faction");
-    return factions.length ? factions.join(", ") : null;
-  }
 
   function toggleSelection(key: ExportKey) {
     setSelected((current) =>
@@ -294,17 +292,16 @@ export default function ExportPage() {
                 pj.map((character) => (
                   <article className="export-card" key={character.id}>
                     <div className="meta-line">
-                      <span>{character.role}</span>
-                      {getCharacterFactions(character.tags) ? (
-                        <span>{getCharacterFactions(character.tags)}</span>
-                      ) : null}
+                      {getCharacterExportMeta(character, data.tagsRegistry).map((item) => (
+                        <span key={`${character.id}-${item}`}>{item}</span>
+                      ))}
                     </div>
                     <h4>{character.name}</h4>
                     <p>{character.background}</p>
-                    {includePlayerInfo && character.playerNotes?.trim() ? (
+                    {getCharacterExportPlayerNotes(character, includePlayerInfo) ? (
                       <div className="export-block">
                         <h5>Informations joueur</h5>
-                        <p>{character.playerNotes}</p>
+                        <p>{getCharacterExportPlayerNotes(character, includePlayerInfo)}</p>
                       </div>
                     ) : null}
                     <div className="export-block">
@@ -343,17 +340,16 @@ export default function ExportPage() {
                 pnj.map((character) => (
                   <article className="export-card" key={character.id}>
                     <div className="meta-line">
-                      <span>{character.role}</span>
-                      {getCharacterFactions(character.tags) ? (
-                        <span>{getCharacterFactions(character.tags)}</span>
-                      ) : null}
+                      {getCharacterExportMeta(character, data.tagsRegistry).map((item) => (
+                        <span key={`${character.id}-${item}`}>{item}</span>
+                      ))}
                     </div>
                     <h4>{character.name}</h4>
                     <p>{character.background}</p>
-                    {includePlayerInfo && character.playerNotes?.trim() ? (
+                    {getCharacterExportPlayerNotes(character, includePlayerInfo) ? (
                       <div className="export-block">
                         <h5>Informations joueur</h5>
-                        <p>{character.playerNotes}</p>
+                        <p>{getCharacterExportPlayerNotes(character, includePlayerInfo)}</p>
                       </div>
                     ) : null}
                     <div className="export-block">
