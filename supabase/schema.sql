@@ -50,3 +50,52 @@ create table if not exists public.game_memberships (
 create index if not exists idx_game_memberships_game_id on public.game_memberships(game_id);
 create index if not exists idx_game_memberships_user_id on public.game_memberships(user_id);
 create index if not exists idx_game_memberships_role on public.game_memberships(role);
+
+alter table public.workspaces enable row level security;
+alter table public.sessions enable row level security;
+alter table public.admin_sessions enable row level security;
+alter table public.profiles enable row level security;
+alter table public.game_memberships enable row level security;
+
+drop policy if exists "members can read their workspaces" on public.workspaces;
+create policy "members can read their workspaces"
+on public.workspaces
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.game_memberships membership
+    where membership.game_id = workspaces.id
+      and membership.user_id = (select auth.uid())
+  )
+);
+
+drop policy if exists "users can read their own profile" on public.profiles;
+create policy "users can read their own profile"
+on public.profiles
+for select
+to authenticated
+using ((select auth.uid()) = id);
+
+drop policy if exists "users can create their own profile" on public.profiles;
+create policy "users can create their own profile"
+on public.profiles
+for insert
+to authenticated
+with check ((select auth.uid()) = id);
+
+drop policy if exists "users can update their own profile" on public.profiles;
+create policy "users can update their own profile"
+on public.profiles
+for update
+to authenticated
+using ((select auth.uid()) = id)
+with check ((select auth.uid()) = id);
+
+drop policy if exists "users can read their own memberships" on public.game_memberships;
+create policy "users can read their own memberships"
+on public.game_memberships
+for select
+to authenticated
+using (user_id = (select auth.uid()));
