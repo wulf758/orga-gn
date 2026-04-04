@@ -37,6 +37,7 @@ export default function HomePage() {
   const [authDisplayName, setAuthDisplayName] = useState("");
   const [authError, setAuthError] = useState("");
   const [authSuccess, setAuthSuccess] = useState("");
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState("");
   const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [isSubmittingAuth, setIsSubmittingAuth] = useState(false);
   const [createError, setCreateError] = useState("");
@@ -82,7 +83,7 @@ export default function HomePage() {
     if (authSuccess) {
       setAuthSuccess("");
     }
-  }, [authEmail, authPassword, authDisplayName, isRegisterMode]);
+  }, [authEmail, authPassword, authDisplayName]);
 
   useEffect(() => {
     if (archiveSuccess) {
@@ -154,17 +155,20 @@ export default function HomePage() {
     }
 
     setAuthError("");
-    setAuthSuccess(
-      isRegisterMode
-        ? "Compte cree. Si Supabase demande une confirmation email, valide-la avant de continuer."
-        : "Connexion reussie."
-    );
+    if (isRegisterMode) {
+      setPendingVerificationEmail(authEmail.trim());
+      setAuthSuccess("");
+    } else {
+      setPendingVerificationEmail("");
+      setAuthSuccess("Connexion reussie.");
+    }
     setAuthPassword("");
     setIsSubmittingAuth(false);
   }
 
   async function handleSignOutUser() {
     await signOutUser();
+    setPendingVerificationEmail("");
     setAuthSuccess("");
     setAuthError("");
   }
@@ -281,6 +285,28 @@ export default function HomePage() {
                   </div>
                 ) : (
                   <form className="form-stack" onSubmit={handleAuthSubmit}>
+                    {pendingVerificationEmail ? (
+                      <div className="detail-block admin-block">
+                        <h3>Compte cree</h3>
+                        <p>
+                          L'inscription a bien ete enregistree pour{" "}
+                          <strong>{pendingVerificationEmail}</strong>. Verifie maintenant ta boite
+                          mail et clique sur le lien de confirmation avant de te connecter.
+                        </p>
+                        <div className="form-actions" style={{ marginTop: 14 }}>
+                          <button
+                            type="button"
+                            className="button-secondary button-secondary-light"
+                            onClick={() => {
+                              setIsRegisterMode(false);
+                              setAuthSuccess("");
+                            }}
+                          >
+                            J'ai verifie mon email
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
                     {isRegisterMode ? (
                       <div className="field">
                         <label htmlFor="auth-display-name">Nom affiche</label>
@@ -337,7 +363,10 @@ export default function HomePage() {
                       <button
                         type="button"
                         className="button-secondary button-secondary-light"
-                        onClick={() => setIsRegisterMode((current) => !current)}
+                        onClick={() => {
+                          setPendingVerificationEmail("");
+                          setIsRegisterMode((current) => !current);
+                        }}
                         disabled={isSubmittingAuth || isAuthLoading}
                       >
                         {isRegisterMode
