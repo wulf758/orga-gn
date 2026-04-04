@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -20,32 +20,15 @@ export function AppShell({ children }: AppShellProps) {
     isCurrentGameReadOnly,
     isReady,
     leaveGame,
-    updateGameName,
     workspaceAccess
   } = useAppData();
-  const [isEditingName, setIsEditingName] = useState(false);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
-  const [draftName, setDraftName] = useState(data.gameName);
   const [isLeavingWorkspace, setIsLeavingWorkspace] = useState(false);
-  const isPublicHome = pathname === "/";
-
-  useEffect(() => {
-    setDraftName(data.gameName);
-  }, [data.gameName]);
+  const isPublicHome = pathname === "/" || pathname.startsWith("/games/");
 
   useEffect(() => {
     setIsSidebarExpanded(false);
   }, [pathname]);
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!draftName.trim()) return;
-
-    const result = await updateGameName(draftName);
-    if (result.ok) {
-      setIsEditingName(false);
-    }
-  }
 
   async function handleLeaveWorkspace() {
     setIsLeavingWorkspace(true);
@@ -118,54 +101,10 @@ export function AppShell({ children }: AppShellProps) {
             >
               {isSidebarExpanded ? "Fermer" : "Menu"}
             </button>
-            <button
-              type="button"
-              className="brand-settings-button"
-              onClick={() => setIsEditingName((current) => !current)}
-              aria-label="Modifier le nom du GN"
-              title="Modifier le nom du GN"
-            >
-              Reglages
-            </button>
           </div>
         </div>
 
         <div id="sidebar-mobile-panel" className="sidebar-mobile-panel">
-          {isEditingName ? (
-            <form className="brand-settings-panel" onSubmit={handleSubmit}>
-              {isCurrentGameReadOnly ? (
-                <div className="form-error">
-                  Ce GN est ouvert en lecture seule pour ton compte.
-                </div>
-              ) : null}
-              <label htmlFor="game-name-input" className="brand-settings-label">
-                Nom du GN
-              </label>
-              <input
-                id="game-name-input"
-                value={draftName}
-                onChange={(event) => setDraftName(event.target.value)}
-                className="brand-settings-input"
-                disabled={isCurrentGameReadOnly}
-              />
-              <div className="brand-settings-actions">
-                <button type="submit" className="button-primary" disabled={isCurrentGameReadOnly}>
-                  Enregistrer
-                </button>
-                <button
-                  type="button"
-                  className="button-secondary"
-                  onClick={() => {
-                    setDraftName(data.gameName);
-                    setIsEditingName(false);
-                  }}
-                >
-                  Annuler
-                </button>
-              </div>
-            </form>
-          ) : null}
-
           <div className="brand-workspace-actions">
             <Link href="/" className="chip">
               Changer de GN

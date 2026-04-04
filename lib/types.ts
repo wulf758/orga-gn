@@ -195,6 +195,7 @@ export type WorkspaceSummary = {
   kraftCount: number;
   archived: boolean;
   archivedAt?: string | null;
+  role?: MembershipRole | null;
 };
 
 export type MembershipRole = "admin" | "orga" | "lecture";

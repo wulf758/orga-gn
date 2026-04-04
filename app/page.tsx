@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 
 import { useAppData } from "@/components/app-data-provider";
 import { CreatePanel } from "@/components/create-panel";
@@ -9,7 +10,6 @@ import { buildDeleteConfirmation } from "@/lib/ui-copy";
 
 export default function HomePage() {
   const {
-    archiveGame,
     authUser,
     createGame,
     currentGame,
@@ -31,7 +31,6 @@ export default function HomePage() {
   const archivedGames = useMemo(() => games.filter((game) => game.archived), [games]);
 
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
-  const [archiveConfirmName, setArchiveConfirmName] = useState("");
   const [newGameName, setNewGameName] = useState("");
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
@@ -45,7 +44,6 @@ export default function HomePage() {
   const [archiveSuccess, setArchiveSuccess] = useState("");
   const [isOpening, setIsOpening] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [isArchiving, setIsArchiving] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [isDeletingPermanently, setIsDeletingPermanently] = useState(false);
 
@@ -71,7 +69,6 @@ export default function HomePage() {
   useEffect(() => {
     setArchiveError("");
     setArchiveSuccess("");
-    setArchiveConfirmName("");
   }, [selectedGameId]);
 
   useEffect(() => {
@@ -93,16 +90,10 @@ export default function HomePage() {
   }, [authEmail, authPassword, authDisplayName, isRegisterMode]);
 
   useEffect(() => {
-    if (archiveError) {
-      setArchiveError("");
-    }
-  }, [archiveConfirmName]);
-
-  useEffect(() => {
     if (archiveSuccess) {
       setArchiveSuccess("");
     }
-  }, [archiveConfirmName, selectedGameId]);
+  }, [selectedGameId]);
 
   async function handleOpenGame(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -180,29 +171,6 @@ export default function HomePage() {
     await signOutUser();
     setAuthSuccess("");
     setAuthError("");
-  }
-
-  async function handleArchiveGame(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!selectedGame || selectedGame.archived || isArchiving) return;
-
-    setIsArchiving(true);
-
-    const result = await archiveGame({
-      id: selectedGame.id,
-      confirmName: archiveConfirmName
-    });
-
-    if (!result.ok) {
-      setArchiveError(result.error ?? "Archivage impossible.");
-      setIsArchiving(false);
-      return;
-    }
-
-    setArchiveConfirmName("");
-    setArchiveError("");
-    setArchiveSuccess(`Le GN "${selectedGame.name}" a ete archive.`);
-    setIsArchiving(false);
   }
 
   async function handleRestoreGame() {
@@ -538,7 +506,7 @@ export default function HomePage() {
             <div>
               <p className="section-kicker">Acces</p>
               <h2 className="section-title">
-                {selectedGame?.archived ? "Gestion de l'archive" : "Entrer dans un espace"}
+                {selectedGame?.archived ? "Gestion de l'archive" : "Acceder ou gerer"}
               </h2>
             </div>
           </div>
@@ -551,7 +519,7 @@ export default function HomePage() {
                       <h3>{selectedGame.name}</h3>
                       <p>
                         {isAuthenticated
-                          ? "Ce GN est rattache a ton compte. Tu peux l'ouvrir directement."
+                          ? "Ce GN est rattache a ton compte. Tu peux y entrer directement, ou ouvrir sa page de gestion si tu en es admin."
                           : "Connecte-toi avec un compte orga membre de ce GN pour l'ouvrir."}
                       </p>
                     </div>
@@ -564,39 +532,25 @@ export default function HomePage() {
                       >
                         {isOpening ? "Ouverture..." : "Ouvrir l'espace"}
                       </button>
+                      {selectedGame.role === "admin" ? (
+                        <Link
+                          href={`/games/${selectedGame.id}/manage`}
+                          className="button-secondary button-secondary-light"
+                        >
+                          Gestion
+                        </Link>
+                      ) : null}
                     </div>
                   </form>
-
-                  <form className="form-stack danger-stack" onSubmit={handleArchiveGame}>
-                    <div className="detail-block danger-block">
-                      <h3>Archiver ce GN</h3>
+                  {selectedGame.role === "admin" ? (
+                    <div className="detail-block">
+                      <h3>Page de gestion dediee</h3>
                       <p>
-                        Cette action retire le GN des espaces actifs. Seul un admin du GN peut le
-                        faire. Pour confirmer, recopier exactement son nom :{" "}
-                        <strong>{selectedGame.name}</strong>
+                        Le renommage du GN, la gestion des membres et l'archivage sont maintenant
+                        regroupes dans une page de gestion unique.
                       </p>
                     </div>
-                    <div className="field">
-                      <label htmlFor="archive-game-name">Nom du GN a retaper</label>
-                      <input
-                        id="archive-game-name"
-                        value={archiveConfirmName}
-                        onChange={(event) => setArchiveConfirmName(event.target.value)}
-                        placeholder={selectedGame.name}
-                        disabled={isArchiving}
-                      />
-                    </div>
-                    {archiveError ? <div className="form-error">{archiveError}</div> : null}
-                    <div className="form-actions">
-                      <button
-                        type="submit"
-                        className="button-danger"
-                        disabled={isArchiving || archiveConfirmName.trim() !== selectedGame.name}
-                      >
-                        {isArchiving ? "Archivage..." : "Archiver le GN"}
-                      </button>
-                    </div>
-                  </form>
+                  ) : null}
                 </>
               ) : (
                 <div className="form-stack admin-stack">
