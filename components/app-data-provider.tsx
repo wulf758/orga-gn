@@ -751,9 +751,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     try {
       const response = await fetch("/api/workspace", {
         method: "PUT",
-        headers: {
+        headers: getAuthHeaders({
           "Content-Type": "application/json"
-        },
+        }),
         body: JSON.stringify({ data: snapshot })
       });
 
@@ -882,7 +882,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         }
 
         const workspaceResponse = await fetch("/api/workspace", {
-          cache: "no-store"
+          cache: "no-store",
+          headers: getAuthHeaders()
         });
 
         if (!workspaceResponse.ok) {
@@ -1169,9 +1170,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         try {
           const response = await fetch("/api/workspace/name", {
             method: "PUT",
-            headers: {
+            headers: getAuthHeaders({
               "Content-Type": "application/json"
-            },
+            }),
             body: JSON.stringify({ name: nextName })
           });
 
