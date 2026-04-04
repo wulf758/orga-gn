@@ -123,16 +123,33 @@ select {
   gap: 12px;
 }
 
+.brand-title-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .brand-settings-button {
-  width: 38px;
-  height: 38px;
+  min-height: 38px;
+  padding: 0 14px;
   margin-top: 16px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.08);
   color: #fbf4ea;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.sidebar-mobile-toggle {
+  display: none;
+}
+
+.sidebar-mobile-panel {
+  display: grid;
+  gap: 0;
 }
 
 .brand-settings-panel {
@@ -319,6 +336,10 @@ select {
   width: 100%;
 }
 
+.hero-actions > * {
+  max-width: 100%;
+}
+
 .button-primary,
 .button-secondary,
 .button-secondary-light,
@@ -388,6 +409,7 @@ button:disabled,
 .button-ghost:hover,
 .button-danger:hover,
 .sidebar-ghost-button:hover,
+.sidebar-mobile-toggle:hover,
 .editor-button:hover,
 .tag-toggle:hover,
 .timeline-day-button:hover,
@@ -403,6 +425,7 @@ a.list-item:hover {
 .button-ghost:focus-visible,
 .button-danger:focus-visible,
 .sidebar-ghost-button:focus-visible,
+.sidebar-mobile-toggle:focus-visible,
 .brand-settings-button:focus-visible,
 .editor-button:focus-visible,
 .tag-toggle:focus-visible,
@@ -429,6 +452,8 @@ select:focus-visible {
 .button-danger:focus-visible,
 .sidebar-ghost-button:hover,
 .sidebar-ghost-button:focus-visible,
+.sidebar-mobile-toggle:hover,
+.sidebar-mobile-toggle:focus-visible,
 .editor-button:hover,
 .editor-button:focus-visible,
 .tag-toggle:hover,
@@ -793,6 +818,10 @@ a.list-item:focus-visible {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.form-actions > * {
+  max-width: 100%;
 }
 
 .form-actions-column {
@@ -1515,6 +1544,7 @@ a.list-item:focus-visible {
   .sidebar {
     position: static;
     min-height: auto;
+    padding: 18px;
   }
 
   .page-frame,
@@ -1522,13 +1552,77 @@ a.list-item:focus-visible {
     min-height: auto;
   }
 
+  .brand-title {
+    margin-top: 12px;
+  }
+
+  .brand-title-actions {
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .sidebar-mobile-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 0 14px;
+    margin-top: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #fbf4ea;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  .sidebar-mobile-panel {
+    display: none;
+    margin-top: 14px;
+  }
+
+  .sidebar.sidebar-expanded .sidebar-mobile-panel {
+    display: grid;
+    gap: 0;
+  }
+
+  .sidebar-section {
+    margin-top: 22px;
+  }
+
   .page-hero,
   .two-column {
     grid-template-columns: 1fr;
   }
 
+  .hero-card {
+    padding: 22px;
+  }
+
+  .hero-title {
+    max-width: 16ch;
+  }
+
+  .hero-copy {
+    max-width: none;
+  }
+
+  .hero-actions {
+    gap: 10px;
+  }
+
+  .nav-description {
+    font-size: 0.88rem;
+  }
+
   .note-meta-grid {
     grid-template-columns: 1fr;
+  }
+
+  .note-content-editor {
+    height: 56vh !important;
+    min-height: 520px !important;
   }
 
   .span-2,
@@ -1553,6 +1647,16 @@ a.list-item:focus-visible {
 
   .timeline-time {
     padding-top: 0;
+    font-weight: 600;
+  }
+
+  .timeline-grid {
+    max-height: none;
+    padding-right: 0;
+  }
+
+  .timeline-slot {
+    padding: 10px;
   }
 
   .storyboard-card-grid {
@@ -1561,6 +1665,16 @@ a.list-item:focus-visible {
 
   .export-grid {
     grid-template-columns: 1fr;
+  }
+
+  .export-sheet-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .export-option,
+  .export-sub-option {
+    grid-template-columns: auto minmax(0, 1fr);
   }
 }
 
@@ -1576,12 +1690,109 @@ a.list-item:focus-visible {
     border-radius: 22px;
   }
 
+  .brand-title-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .brand-title-actions {
+    justify-content: stretch;
+    gap: 10px;
+  }
+
+  .brand-settings-button,
+  .sidebar-mobile-toggle,
+  .sidebar-ghost-button,
+  .brand-workspace-actions .chip {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .brand-workspace-actions,
+  .brand-settings-actions,
+  .form-actions,
+  .note-edit-actions,
+  .hero-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .brand-settings-actions > *,
+  .form-actions > *,
+  .note-edit-actions > *,
+  .hero-actions > * {
+    width: 100%;
+  }
+
   .hero-card,
   .surface,
   .detail-block,
   .stat-block,
   .list-item {
     padding: 18px;
+  }
+
+  .hero-title,
+  .section-title,
+  .brand-title {
+    text-wrap: pretty;
+  }
+
+  .nav-link,
+  .compact-link {
+    padding: 10px 12px;
+  }
+
+  .nav-description,
+  .compact-description {
+    display: none;
+  }
+
+  .meta-line {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .tag-registry-meta {
+    gap: 8px;
+  }
+
+  .timeline-day-button,
+  .timeline-event,
+  .workspace-card {
+    padding: 12px 14px;
+  }
+
+  .timeline-continuation {
+    gap: 6px;
+  }
+
+  .export-option,
+  .export-sub-option {
+    padding: 10px 12px;
+  }
+
+  .export-sub-option {
+    margin-left: 0;
+  }
+
+  .export-card,
+  .export-mini-card {
+    padding: 16px;
+  }
+
+  .note-read-shell,
+  .note-edit-shell {
+    padding: 18px;
+  }
+
+  .note-edit-shell {
+    min-height: auto;
+  }
+
+  .note-content-editor {
+    height: 48vh !important;
+    min-height: 360px !important;
   }
 
   .stats-row {
