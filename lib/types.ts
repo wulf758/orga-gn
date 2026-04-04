@@ -40,7 +40,6 @@ export type Character = {
   id: string;
   name: string;
   role: "PJ" | "PNJ";
-  faction: string;
   tags: string[];
   playerNotes?: string;
   background: string;

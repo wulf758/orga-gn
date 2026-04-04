@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { PageHero } from "@/components/page-hero";
 import { useAppData } from "@/components/app-data-provider";
 import { formatDateLabel, formatDateTimeLabel } from "@/lib/date-utils";
+import { getTagLabelsForSection } from "@/lib/tags";
 
 type ExportKey =
   | "documents"
@@ -123,6 +124,11 @@ export default function ExportPage() {
     () => data.kraftItems.filter((item) => item.status === "Fini"),
     [data.kraftItems]
   );
+
+  function getCharacterFactions(tags: string[]) {
+    const factions = getTagLabelsForSection(tags, data.tagsRegistry, "faction");
+    return factions.length ? factions.join(", ") : null;
+  }
 
   function toggleSelection(key: ExportKey) {
     setSelected((current) =>
@@ -289,7 +295,9 @@ export default function ExportPage() {
                   <article className="export-card" key={character.id}>
                     <div className="meta-line">
                       <span>{character.role}</span>
-                      <span>{character.faction}</span>
+                      {getCharacterFactions(character.tags) ? (
+                        <span>{getCharacterFactions(character.tags)}</span>
+                      ) : null}
                     </div>
                     <h4>{character.name}</h4>
                     <p>{character.background}</p>
@@ -336,7 +344,9 @@ export default function ExportPage() {
                   <article className="export-card" key={character.id}>
                     <div className="meta-line">
                       <span>{character.role}</span>
-                      <span>{character.faction}</span>
+                      {getCharacterFactions(character.tags) ? (
+                        <span>{getCharacterFactions(character.tags)}</span>
+                      ) : null}
                     </div>
                     <h4>{character.name}</h4>
                     <p>{character.background}</p>

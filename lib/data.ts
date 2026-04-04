@@ -265,7 +265,6 @@ export const characters: Character[] = [
     id: "alim",
     name: "Alim de Vermeille",
     role: "PJ",
-    faction: "Maison du Lion",
     tags: ["faction"],
     playerNotes: "Joueur sensible aux scenes d'etouffement. Prevoir un point de sortie clair en cas de surcharge.",
     background:
@@ -284,7 +283,6 @@ export const characters: Character[] = [
     id: "mira",
     name: "Mira la Cendre",
     role: "PNJ",
-    faction: "Veilleurs de Cendre",
     tags: ["faction", "secret"],
     playerNotes: "PNJ interprete par une orga mobile. Eviter les scenes avec fumee dense et garder une pause eau accessible.",
     background:
@@ -303,7 +301,6 @@ export const characters: Character[] = [
     id: "soren",
     name: "Soren Valcor",
     role: "PJ",
-    faction: "Ligue des Marchands",
     tags: ["faction"],
     playerNotes: "Le joueur prefere eviter les confrontations physiques brusques et demande un rappel oral avant toute escalade.",
     background:

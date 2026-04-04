@@ -392,22 +392,6 @@ function renameTagInList(tags: string[], previousLabel: string, nextLabel: strin
   );
 }
 
-function deriveFactionFromTags(
-  tags: string[],
-  definitions: TagDefinition[],
-  fallback = "Sans faction"
-) {
-  const factionTags = tags.filter((tag) => {
-    const definition = definitions.find(
-      (entry) => normalizeTagLabel(entry.label) === normalizeTagLabel(tag)
-    );
-
-    return normalizeTagSection(definition?.section ?? "") === "faction";
-  });
-
-  return factionTags.length ? factionTags.join(", ") : fallback;
-}
-
 function upsertTagSection(
   sections: TagSection[],
   label: string,
@@ -1683,7 +1667,6 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
               id,
               name: input.name,
               role: input.role,
-              faction: deriveFactionFromTags(input.tags, current.tagsRegistry),
               tags: input.tags,
               playerNotes: input.playerNotes,
               background: input.background,
@@ -1711,11 +1694,6 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
                       ...character,
                       name: input.name,
                       role: input.role,
-                      faction: deriveFactionFromTags(
-                        input.tags,
-                        current.tagsRegistry,
-                        character.faction || "Sans faction"
-                      ),
                       tags: input.tags,
                       playerNotes: input.playerNotes,
                       background: input.background,

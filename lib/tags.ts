@@ -240,3 +240,23 @@ export function isSystemTagLabel(tag: string) {
 export function isSystemTagSection(section: string) {
   return normalizeTagSection(section) === SYSTEM_TAG_SECTION.label;
 }
+
+export function getTagLabelsForSection(
+  tags: string[],
+  definitions: TagDefinition[],
+  section: string
+) {
+  const normalizedSection = normalizeTagSection(section);
+
+  return Array.from(
+    new Set(
+      tags.filter((tag) => {
+        const definition = definitions.find(
+          (entry) => normalizeTagLabel(entry.label) === normalizeTagLabel(tag)
+        );
+
+        return normalizeTagSection(definition?.section ?? "") === normalizedSection;
+      })
+    )
+  );
+}

@@ -7,7 +7,7 @@ import { useParams } from "next/navigation";
 import { useAppData } from "@/components/app-data-provider";
 import { PageHero } from "@/components/page-hero";
 import { TagBadge } from "@/components/tag-badge";
-import { findTagDefinition, normalizeTagLabel } from "@/lib/tags";
+import { findTagDefinition, getTagLabelsForSection, normalizeTagLabel } from "@/lib/tags";
 
 type SearchResult = {
   id: string;
@@ -57,7 +57,7 @@ export default function TagSearchPage() {
             summary: character.background,
             href: `/characters/${character.id}`,
             bucket: character.role,
-            meta: character.faction
+            meta: getTagLabelsForSection(character.tags, data.tagsRegistry, "faction").join(", ") || undefined
           }))
       },
       {
