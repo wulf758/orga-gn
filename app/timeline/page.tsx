@@ -89,6 +89,24 @@ export default function TimelinePage() {
     [data.timelineEntries, selectedDay?.id]
   );
 
+  const selectedDaySceneLinks = useMemo(() => {
+    if (!selectedDay) {
+      return [];
+    }
+
+    const dayEntryIds = new Set(
+      data.timelineEntries
+        .filter((entry) => entry.dayId === selectedDay.id)
+        .map((entry) => entry.id)
+    );
+
+    return data.storyboardScenes.filter(
+      (scene) =>
+        scene.dayId === selectedDay.id ||
+        (scene.timelineEntryId ? dayEntryIds.has(scene.timelineEntryId) : false)
+    );
+  }, [data.storyboardScenes, data.timelineEntries, selectedDay]);
+
   const editingEntry = selectedDayEntries.find((entry) => entry.id === editingEntryId) ?? null;
 
   useEffect(() => {
@@ -152,7 +170,21 @@ export default function TimelinePage() {
 
   function handleDayDelete() {
     if (!selectedDay) return;
-    if (!window.confirm(`Supprimer "${selectedDay.label}" et tous ses blocs timeline ?`)) return;
+
+    const linkedSceneCount = selectedDaySceneLinks.length;
+    const linkedEntryCount = selectedDayEntries.length;
+    const confirmationParts = [
+      `Supprimer "${selectedDay.label}" et ses ${linkedEntryCount} bloc(s) timeline ?`
+    ];
+
+    if (linkedSceneCount > 0) {
+      confirmationParts.push(
+        "",
+        `Attention : ${linkedSceneCount} scene(s) storyboard seront detachees de ce jour et de leurs liens timeline, mais ne seront pas supprimees.`
+      );
+    }
+
+    if (!window.confirm(confirmationParts.join("\n"))) return;
     deleteTimelineDay(selectedDay.id);
     setSelectedDayId("");
     resetEntryForm();
@@ -186,7 +218,17 @@ export default function TimelinePage() {
   }
 
   function handleEntryDelete(id: string, title: string) {
-    if (!window.confirm(`Supprimer le bloc "${title}" ?`)) return;
+    const linkedScene = data.storyboardScenes.find((scene) => scene.timelineEntryId === id);
+    const confirmationParts = [`Supprimer le bloc "${title}" ?`];
+
+    if (linkedScene) {
+      confirmationParts.push(
+        "",
+        `Attention : la scene storyboard "${linkedScene.title}" sera detachee de ce bloc et sortie du jour associe, mais elle ne sera pas supprimee.`
+      );
+    }
+
+    if (!window.confirm(confirmationParts.join("\n"))) return;
     deleteTimelineEntry(id);
     if (editingEntryId === id) {
       resetEntryForm();
@@ -415,6 +457,11 @@ export default function TimelinePage() {
               <p className="section-copy">
                 Lecture complete de la journee au quart d'heure, avec acces direct aux blocs a ajuster.
               </p>
+              {selectedDaySceneLinks.length ? (
+                <p className="section-copy" style={{ marginTop: 8 }}>
+                  {selectedDaySceneLinks.length} scene(s) storyboard sont actuellement reliees a ce jour.
+                </p>
+              ) : null}
             </div>
           </div>
 
@@ -436,6 +483,11 @@ export default function TimelinePage() {
                           <span className="timeline-event-meta">
                             {entry.startTime} - {entry.endTime} - {entry.location}
                           </span>
+                          {entry.storyboardSceneId ? (
+                            <span className="timeline-event-meta">
+                              Lie au storyboard
+                            </span>
+                          ) : null}
                         </button>
                       ))
                     ) : row.continuingEntries.length ? (
