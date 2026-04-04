@@ -852,6 +852,19 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   }, [isAuthConfigured]);
 
   useEffect(() => {
+    if (!authSession?.access_token || !authUser) {
+      return;
+    }
+
+    void fetch("/api/profile", {
+      method: "POST",
+      headers: getAuthHeaders()
+    }).catch(() => {
+      // La synchro du profil ne doit pas bloquer l'interface.
+    });
+  }, [authSession?.access_token, authUser]);
+
+  useEffect(() => {
     let active = true;
 
     async function bootstrap() {

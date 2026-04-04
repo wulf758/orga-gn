@@ -69,12 +69,17 @@ export const navigation: NavItem[] = [
     label: "Tags",
     description: "Lexique commun, couleurs et priorites transversales"
   },
-  {
-    href: "/export",
-    label: "Export",
-    description: "Selection PDF des sections du GN et impression"
-  }
-];
+    {
+      href: "/export",
+      label: "Export",
+      description: "Selection PDF des sections du GN et impression"
+    },
+    {
+      href: "/members",
+      label: "Membres",
+      description: "Acces, roles et repartition de l'equipe orga"
+    }
+  ];
 
 export const documents: DocumentPage[] = [
   {

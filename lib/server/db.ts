@@ -669,6 +669,17 @@ function sqliteUpsertProfile(input: { id: string; displayName?: string | null })
   return sqliteGetProfileById(input.id);
 }
 
+function sqliteListProfiles() {
+  const database = getSqliteDatabase();
+  const statement = database.prepare(`
+    SELECT ${PROFILE_SELECT}
+    FROM profiles
+    ORDER BY COALESCE(display_name, id) ASC, created_at ASC
+  `);
+
+  return statement.all() as ProfileRow[];
+}
+
 function sqliteListGameMemberships(gameId: string) {
   const database = getSqliteDatabase();
   const statement = database.prepare(`
@@ -1120,6 +1131,20 @@ export async function upsertProfile(input: { id: string; displayName?: string | 
   });
   const rows = (await response.json()) as Array<Record<string, unknown>>;
   return rows[0] ? toUserProfile(fromSupabaseProfile(rows[0])) : null;
+}
+
+export async function listProfiles() {
+  if (!isSupabaseEnabled()) {
+    return sqliteListProfiles().map(toUserProfile);
+  }
+
+  const query = buildQuery({
+    select: PROFILE_SELECT,
+    order: "display_name.asc,created_at.asc"
+  });
+  const response = await supabaseFetch(`profiles?${query}`);
+  const rows = (await response.json()) as Array<Record<string, unknown>>;
+  return rows.map((row) => toUserProfile(fromSupabaseProfile(row)));
 }
 
 export async function listGameMemberships(gameId: string) {

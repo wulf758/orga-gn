@@ -1,16 +1,20 @@
 import { cookies } from "next/headers";
 
-import { AppData, WorkspaceAccessMode } from "@/lib/types";
+import { AppData, MembershipRole, WorkspaceAccessMode } from "@/lib/types";
 import {
   archiveWorkspace,
   createAdminSession,
   createSession,
   createWorkspace,
+  deleteGameMembership,
+  getProfileById,
   getGameMembership,
   deleteAdminSession,
   deleteWorkspace,
   deleteSession,
   getAdminSession,
+  listGameMemberships,
+  listProfiles,
   listUserMemberships,
   getSession,
   getWorkspaceById,
@@ -103,6 +107,33 @@ async function resolveWorkspaceRoleForUser(workspaceId: string, userId?: string 
 
   const membership = await getGameMembership(workspaceId, userId);
   return membership?.role ?? null;
+}
+
+async function requireCurrentWorkspaceAdmin(userId?: string | null) {
+  const current = await getCurrentWorkspaceContext();
+
+  if (!current) {
+    return { ok: false as const, error: "Session invalide." };
+  }
+
+  if (!userId) {
+    return { ok: false as const, error: "Connexion utilisateur requise." };
+  }
+
+  const membership = await getGameMembership(current.workspace.id, userId);
+
+  if (!membership || membership.role !== "admin") {
+    return {
+      ok: false as const,
+      error: "Seuls les admins du GN peuvent gerer les membres."
+    };
+  }
+
+  return {
+    ok: true as const,
+    current,
+    membership
+  };
 }
 
 export async function listWorkspaceOverview() {
@@ -522,4 +553,150 @@ export async function deleteArchivedWorkspacePermanently(input: { id: string }) 
     ok: true as const,
     gameId: workspace.id
   };
+}
+
+export async function listCurrentWorkspaceMembersForUser(userId?: string | null) {
+  const admin = await requireCurrentWorkspaceAdmin(userId);
+
+  if (!admin.ok) {
+    return admin;
+  }
+
+  const [memberships, profiles] = await Promise.all([
+    listGameMemberships(admin.current.workspace.id),
+    listProfiles()
+  ]);
+  const profilesMap = new Map(profiles.map((profile) => [profile.id, profile] as const));
+
+  return {
+    ok: true as const,
+    currentUserId: userId!,
+    members: memberships.map((membership) => ({
+      membership,
+      profile: profilesMap.get(membership.userId) ?? null
+    })),
+    availableProfiles: profiles.filter((profile) => !memberships.some((m) => m.userId === profile.id))
+  };
+}
+
+export async function addCurrentWorkspaceMemberForUser(input: {
+  currentUserId?: string | null;
+  targetUserId: string;
+  role: MembershipRole;
+}) {
+  const admin = await requireCurrentWorkspaceAdmin(input.currentUserId);
+
+  if (!admin.ok) {
+    return admin;
+  }
+
+  const targetProfile = await getProfileById(input.targetUserId);
+
+  if (!targetProfile) {
+    return { ok: false as const, error: "Utilisateur introuvable dans l'annuaire." };
+  }
+
+  const membership = await upsertGameMembership({
+    gameId: admin.current.workspace.id,
+    userId: input.targetUserId,
+    role: input.role
+  });
+
+  if (!membership) {
+    return { ok: false as const, error: "Ajout du membre impossible." };
+  }
+
+  return {
+    ok: true as const,
+    member: {
+      membership,
+      profile: targetProfile
+    }
+  };
+}
+
+export async function updateCurrentWorkspaceMemberRoleForUser(input: {
+  currentUserId?: string | null;
+  membershipId: string;
+  role: MembershipRole;
+}) {
+  const admin = await requireCurrentWorkspaceAdmin(input.currentUserId);
+
+  if (!admin.ok) {
+    return admin;
+  }
+
+  const memberships = await listGameMemberships(admin.current.workspace.id);
+  const targetMembership = memberships.find((membership) => membership.id === input.membershipId);
+
+  if (!targetMembership) {
+    return { ok: false as const, error: "Membre introuvable dans ce GN." };
+  }
+
+  if (targetMembership.role === "admin" && input.role !== "admin") {
+    const adminCount = memberships.filter((membership) => membership.role === "admin").length;
+
+    if (adminCount <= 1) {
+      return {
+        ok: false as const,
+        error: "Ce GN doit conserver au moins un admin."
+      };
+    }
+  }
+
+  const membership = await upsertGameMembership({
+    gameId: admin.current.workspace.id,
+    userId: targetMembership.userId,
+    role: input.role
+  });
+  const profile = await getProfileById(targetMembership.userId);
+
+  if (!membership) {
+    return { ok: false as const, error: "Modification du role impossible." };
+  }
+
+  return {
+    ok: true as const,
+    member: {
+      membership,
+      profile
+    }
+  };
+}
+
+export async function removeCurrentWorkspaceMemberForUser(input: {
+  currentUserId?: string | null;
+  membershipId: string;
+}) {
+  const admin = await requireCurrentWorkspaceAdmin(input.currentUserId);
+
+  if (!admin.ok) {
+    return admin;
+  }
+
+  const memberships = await listGameMemberships(admin.current.workspace.id);
+  const targetMembership = memberships.find((membership) => membership.id === input.membershipId);
+
+  if (!targetMembership) {
+    return { ok: false as const, error: "Membre introuvable dans ce GN." };
+  }
+
+  if (targetMembership.role === "admin") {
+    const adminCount = memberships.filter((membership) => membership.role === "admin").length;
+
+    if (adminCount <= 1) {
+      return {
+        ok: false as const,
+        error: "Ce GN doit conserver au moins un admin."
+      };
+    }
+  }
+
+  const deleted = await deleteGameMembership(targetMembership.id);
+
+  if (!deleted) {
+    return { ok: false as const, error: "Retrait du membre impossible." };
+  }
+
+  return { ok: true as const, removedMembershipId: targetMembership.id };
 }
