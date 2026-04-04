@@ -10,6 +10,7 @@ import { buildDeleteConfirmation } from "@/lib/ui-copy";
 export default function HomePage() {
   const {
     archiveGame,
+    authUser,
     closeAdminSession,
     createGame,
     currentGame,
@@ -17,11 +18,17 @@ export default function HomePage() {
     games,
     hasCurrentGame,
     isAdminSession,
+    isAuthConfigured,
+    isAuthenticated,
+    isAuthLoading,
     isReady,
     openAdminSession,
     openGame,
     resetGamePassword,
-    restoreGame
+    restoreGame,
+    signInWithPassword,
+    signOutUser,
+    signUpWithPassword
   } = useAppData();
   const activeGames = useMemo(() => games.filter((game) => !game.archived), [games]);
   const archivedGames = useMemo(() => games.filter((game) => game.archived), [games]);
@@ -34,6 +41,13 @@ export default function HomePage() {
   const [invitePassword, setInvitePassword] = useState("");
   const [newGameName, setNewGameName] = useState("");
   const [newGamePassword, setNewGamePassword] = useState("");
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authDisplayName, setAuthDisplayName] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [authSuccess, setAuthSuccess] = useState("");
+  const [isRegisterMode, setIsRegisterMode] = useState(false);
+  const [isSubmittingAuth, setIsSubmittingAuth] = useState(false);
   const [resetPasswordValue, setResetPasswordValue] = useState("");
   const [accessError, setAccessError] = useState("");
   const [adminError, setAdminError] = useState("");
@@ -98,6 +112,18 @@ export default function HomePage() {
   }, [invitePassword, newGameName, newGamePassword]);
 
   useEffect(() => {
+    if (authError) {
+      setAuthError("");
+    }
+  }, [authEmail, authPassword, authDisplayName, isRegisterMode]);
+
+  useEffect(() => {
+    if (authSuccess) {
+      setAuthSuccess("");
+    }
+  }, [authEmail, authPassword, authDisplayName, isRegisterMode]);
+
+  useEffect(() => {
     if (archiveError) {
       setArchiveError("");
     }
@@ -158,6 +184,45 @@ export default function HomePage() {
     setNewGameName("");
     setNewGamePassword("");
     window.location.assign("/dashboard");
+  }
+
+  async function handleAuthSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (isSubmittingAuth) return;
+
+    setIsSubmittingAuth(true);
+
+    const result = isRegisterMode
+      ? await signUpWithPassword({
+          email: authEmail,
+          password: authPassword,
+          displayName: authDisplayName
+        })
+      : await signInWithPassword({
+          email: authEmail,
+          password: authPassword
+        });
+
+    if (!result.ok) {
+      setAuthError(result.error ?? "Authentification impossible.");
+      setIsSubmittingAuth(false);
+      return;
+    }
+
+    setAuthError("");
+    setAuthSuccess(
+      isRegisterMode
+        ? "Compte cree. Si Supabase demande une confirmation email, valide-la avant de continuer."
+        : "Connexion reussie."
+    );
+    setAuthPassword("");
+    setIsSubmittingAuth(false);
+  }
+
+  async function handleSignOutUser() {
+    await signOutUser();
+    setAuthSuccess("");
+    setAuthError("");
   }
 
   async function handleArchiveGame(event: FormEvent<HTMLFormElement>) {
@@ -301,21 +366,126 @@ export default function HomePage() {
         }
         aside={
           <div className="insight-column">
+            {isAuthConfigured ? (
+              <CreatePanel
+                title={isAuthenticated ? "Compte orga connecte" : "Connexion orga"}
+                description={
+                  isAuthenticated
+                    ? "Ton compte peut etre admin sur son propre GN, tout en restant orga ou lecteur sur d'autres espaces."
+                    : "Connecte-toi pour creer ton propre GN et retrouver uniquement les espaces auxquels tu as acces."
+                }
+              >
+                {isAuthenticated && authUser ? (
+                  <div className="form-stack">
+                    <div className="detail-block admin-block">
+                      <h3>{authUser.displayName || authUser.email || "Compte orga"}</h3>
+                      <p>{authUser.email ?? "Adresse email indisponible."}</p>
+                    </div>
+                    {authSuccess ? <div className="form-success">{authSuccess}</div> : null}
+                    <div className="form-actions">
+                      <button
+                        type="button"
+                        className="button-secondary button-secondary-light"
+                        onClick={() => {
+                          void handleSignOutUser();
+                        }}
+                      >
+                        Se deconnecter
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <form className="form-stack" onSubmit={handleAuthSubmit}>
+                    {isRegisterMode ? (
+                      <div className="field">
+                        <label htmlFor="auth-display-name">Nom affiche</label>
+                        <input
+                          id="auth-display-name"
+                          value={authDisplayName}
+                          onChange={(event) => setAuthDisplayName(event.target.value)}
+                          placeholder="Exemple : Cyril"
+                          disabled={isSubmittingAuth || isAuthLoading}
+                        />
+                      </div>
+                    ) : null}
+                    <div className="field">
+                      <label htmlFor="auth-email">Email</label>
+                      <input
+                        id="auth-email"
+                        type="email"
+                        value={authEmail}
+                        onChange={(event) => setAuthEmail(event.target.value)}
+                        placeholder="orga@exemple.fr"
+                        disabled={isSubmittingAuth || isAuthLoading}
+                      />
+                    </div>
+                    <div className="field">
+                      <label htmlFor="auth-password">Mot de passe</label>
+                      <input
+                        id="auth-password"
+                        type="password"
+                        value={authPassword}
+                        onChange={(event) => setAuthPassword(event.target.value)}
+                        disabled={isSubmittingAuth || isAuthLoading}
+                      />
+                    </div>
+                    {authError ? <div className="form-error">{authError}</div> : null}
+                    {authSuccess ? <div className="form-success">{authSuccess}</div> : null}
+                    <div className="form-actions form-actions-column">
+                      <button
+                        type="submit"
+                        className="button-primary"
+                        disabled={
+                          isAuthLoading ||
+                          isSubmittingAuth ||
+                          !authEmail.trim() ||
+                          !authPassword.trim() ||
+                          (isRegisterMode && !authDisplayName.trim())
+                        }
+                      >
+                        {isSubmittingAuth
+                          ? "Verification..."
+                          : isRegisterMode
+                          ? "Creer mon compte"
+                          : "Se connecter"}
+                      </button>
+                      <button
+                        type="button"
+                        className="button-secondary button-secondary-light"
+                        onClick={() => setIsRegisterMode((current) => !current)}
+                        disabled={isSubmittingAuth || isAuthLoading}
+                      >
+                        {isRegisterMode
+                          ? "J'ai deja un compte"
+                          : "Creer un compte orga"}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </CreatePanel>
+            ) : null}
+
             <CreatePanel
               title="Creer un nouveau GN"
-              description="La creation est reservee aux personnes disposant du mot de passe d'invitation, puis chaque GN recoit son mot de passe d'acces propre."
+              description={
+                isAuthenticated
+                  ? "Ce GN sera cree sous ton compte, et tu deviendras automatiquement admin de cet espace."
+                  : "La creation est reservee aux personnes disposant du mot de passe d'invitation, puis chaque GN recoit son mot de passe d'acces propre."
+              }
             >
               <form className="form-stack" onSubmit={handleCreateGame}>
-                <div className="field">
-                  <label htmlFor="invite-password">Mot de passe d'invitation</label>
-                  <input
-                    id="invite-password"
-                    type="password"
-                    value={invitePassword}
-                    onChange={(event) => setInvitePassword(event.target.value)}
-                    disabled={isCreating}
-                  />
-                </div>
+                {!isAuthenticated ? (
+                  <div className="field">
+                    <label htmlFor="invite-password">Mot de passe d'invitation</label>
+                    <input
+                      id="invite-password"
+                      type="password"
+                      value={invitePassword}
+                      onChange={(event) => setInvitePassword(event.target.value)}
+                      disabled={isCreating}
+                    />
+                  </div>
+                ) : null}
                 <div className="field">
                   <label htmlFor="new-game-name">Nom du GN</label>
                   <input
@@ -344,9 +514,9 @@ export default function HomePage() {
                     className="button-primary"
                     disabled={
                       isCreating ||
-                      !invitePassword.trim() ||
                       !newGameName.trim() ||
-                      !newGamePassword.trim()
+                      !newGamePassword.trim() ||
+                      (!isAuthenticated && !invitePassword.trim())
                     }
                   >
                     {isCreating ? "Creation..." : "Creer cet espace"}
@@ -438,7 +608,9 @@ export default function HomePage() {
               <p className="section-kicker">GN disponibles</p>
               <h2 className="section-title">Espaces en developpement</h2>
               <p className="section-copy">
-                Chaque carte ouvre vers un espace de travail protege par mot de passe.
+                {isAuthenticated
+                  ? "Les espaces affiches ici correspondent aux GN auxquels ton compte a acces."
+                  : "Chaque carte ouvre vers un espace de travail protege par mot de passe."}
               </p>
             </div>
           </div>
@@ -540,26 +712,37 @@ export default function HomePage() {
                     <div className="detail-block">
                       <h3>{selectedGame.name}</h3>
                       <p>
-                        Entrer le mot de passe d&apos;acces de ce GN pour ouvrir son espace de
-                        travail.
+                        {isAuthenticated
+                          ? "Ton compte peut ouvrir directement ce GN. Tu peux aussi continuer a renseigner le mot de passe partage si besoin."
+                          : "Entrer le mot de passe d'acces de ce GN pour ouvrir son espace de travail."}
                       </p>
                     </div>
-                    <div className="field">
-                      <label htmlFor="access-password">Mot de passe d'acces</label>
-                      <input
-                        id="access-password"
-                        type="password"
-                        value={accessPassword}
-                        onChange={(event) => setAccessPassword(event.target.value)}
-                        disabled={isOpening}
-                      />
-                    </div>
+                    {!isAuthenticated ? (
+                      <div className="field">
+                        <label htmlFor="access-password">Mot de passe d'acces</label>
+                        <input
+                          id="access-password"
+                          type="password"
+                          value={accessPassword}
+                          onChange={(event) => setAccessPassword(event.target.value)}
+                          disabled={isOpening}
+                        />
+                      </div>
+                    ) : null}
+                    {isAuthenticated ? (
+                      <div className="detail-block">
+                        <p>
+                          Ouverture via ton compte orga. Le mot de passe du GN reste disponible
+                          pour les personnes qui ne sont pas encore membres.
+                        </p>
+                      </div>
+                    ) : null}
                     {accessError ? <div className="form-error">{accessError}</div> : null}
                     <div className="form-actions">
                       <button
                         type="submit"
                         className="button-primary"
-                        disabled={isOpening || !accessPassword.trim()}
+                        disabled={isOpening || (!isAuthenticated && !accessPassword.trim())}
                       >
                         {isOpening ? "Ouverture..." : "Ouvrir l'espace"}
                       </button>

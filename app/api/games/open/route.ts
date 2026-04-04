@@ -2,11 +2,18 @@ import { NextResponse } from "next/server";
 
 import { openWorkspaceWithPassword } from "@/lib/server/workspace";
 import {
+  getAuthenticatedUserFromAccessToken,
+  getBearerTokenFromRequest
+} from "@/lib/server/supabase-auth";
+import {
   SESSION_COOKIE_NAME,
   SESSION_DURATION_SECONDS
 } from "@/lib/server/auth";
 
 export async function POST(request: Request) {
+  const currentUser = await getAuthenticatedUserFromAccessToken(
+    getBearerTokenFromRequest(request)
+  );
   const body = (await request.json()) as {
     id?: string;
     accessPassword?: string;
@@ -14,7 +21,8 @@ export async function POST(request: Request) {
 
   const result = await openWorkspaceWithPassword({
     id: body.id ?? "",
-    accessPassword: body.accessPassword ?? ""
+    accessPassword: body.accessPassword ?? "",
+    userId: currentUser?.id ?? null
   });
 
   if (!result.ok) {

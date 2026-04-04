@@ -2,20 +2,30 @@ import { NextResponse } from "next/server";
 
 import {
   createWorkspaceWithAccess,
-  listWorkspaceOverview
+  listWorkspaceOverviewForUser
 } from "@/lib/server/workspace";
+import {
+  getAuthenticatedUserFromAccessToken,
+  getBearerTokenFromRequest
+} from "@/lib/server/supabase-auth";
 import {
   SESSION_COOKIE_NAME,
   SESSION_DURATION_SECONDS
 } from "@/lib/server/auth";
 
-export async function GET() {
-  const payload = await listWorkspaceOverview();
+export async function GET(request: Request) {
+  const currentUser = await getAuthenticatedUserFromAccessToken(
+    getBearerTokenFromRequest(request)
+  );
+  const payload = await listWorkspaceOverviewForUser(currentUser?.id ?? null);
   return NextResponse.json(payload);
 }
 
 export async function POST(request: Request) {
   try {
+    const currentUser = await getAuthenticatedUserFromAccessToken(
+      getBearerTokenFromRequest(request)
+    );
     const body = (await request.json()) as {
       invitePassword?: string;
       name?: string;
@@ -25,7 +35,8 @@ export async function POST(request: Request) {
     const result = await createWorkspaceWithAccess({
       invitePassword: body.invitePassword ?? "",
       name: body.name ?? "",
-      accessPassword: body.accessPassword ?? ""
+      accessPassword: body.accessPassword ?? "",
+      creator: currentUser
     });
 
     if (!result.ok) {

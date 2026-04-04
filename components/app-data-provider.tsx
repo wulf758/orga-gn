@@ -9,6 +9,7 @@ import {
   useRef,
   useState
 } from "react";
+import type { Session, User } from "@supabase/supabase-js";
 
 import { getEmptyAppData } from "@/lib/data";
 import {
@@ -32,6 +33,10 @@ import {
 } from "@/lib/types";
 import { formatDateLabel, formatDateTimeLabel } from "@/lib/date-utils";
 import { parseDocumentContent } from "@/lib/document-content";
+import {
+  getSupabaseBrowserClient,
+  isSupabaseAuthConfigured
+} from "@/lib/supabase-browser";
 import {
   deleteTagAcrossAppData,
   renameTagAcrossAppData
@@ -57,6 +62,12 @@ type GameRecord = WorkspaceSummary;
 type ActionResult = {
   ok: boolean;
   error?: string;
+};
+
+type AuthUser = {
+  id: string;
+  email: string | null;
+  displayName: string | null;
 };
 
 type CreateGameInput = {
@@ -306,11 +317,25 @@ type UpdateTagSectionInput = {
 type AppDataContextValue = {
   isReady: boolean;
   isAdminSession: boolean;
+  isAuthConfigured: boolean;
+  isAuthenticated: boolean;
+  isAuthLoading: boolean;
+  authUser: AuthUser | null;
   games: GameRecord[];
   currentGameId: string | null;
   currentGame: GameRecord | null;
   hasCurrentGame: boolean;
   data: AppData;
+  signInWithPassword: (input: {
+    email: string;
+    password: string;
+  }) => Promise<ActionResult>;
+  signUpWithPassword: (input: {
+    email: string;
+    password: string;
+    displayName?: string;
+  }) => Promise<ActionResult>;
+  signOutUser: () => Promise<void>;
   createGame: (input: CreateGameInput) => Promise<ActionResult>;
   openGame: (input: OpenGameInput) => Promise<ActionResult>;
   openAdminSession: (password: string) => Promise<ActionResult>;
@@ -618,9 +643,34 @@ async function readActionError(response: Response, fallback: string) {
 
 const WORKSPACE_SAVE_DEBOUNCE_MS = 450;
 
+function toAuthUser(user: User | null | undefined): AuthUser | null {
+  if (!user) {
+    return null;
+  }
+
+  const metadata =
+    user.user_metadata && typeof user.user_metadata === "object"
+      ? (user.user_metadata as Record<string, unknown>)
+      : null;
+  const displayName =
+    (typeof metadata?.display_name === "string" && metadata.display_name) ||
+    (typeof metadata?.full_name === "string" && metadata.full_name) ||
+    user.email?.split("@")[0] ||
+    null;
+
+  return {
+    id: user.id,
+    email: user.email ?? null,
+    displayName: displayName?.trim() || null
+  };
+}
+
 export function AppDataProvider({ children }: { children: ReactNode }) {
   const [isReady, setIsReady] = useState(false);
   const [isAdminSession, setIsAdminSession] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(isSupabaseAuthConfigured());
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const [authSession, setAuthSession] = useState<Session | null>(null);
   const [games, setGames] = useState<GameRecord[]>([]);
   const [currentGame, setCurrentGame] = useState<GameRecord | null>(null);
   const [data, setData] = useState<AppData>(getEmptyAppData);
@@ -631,6 +681,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const isPersistingRef = useRef(false);
   const queuedPersistRef = useRef(false);
   const isMountedRef = useRef(true);
+  const isAuthConfigured = isSupabaseAuthConfigured();
 
   function clearScheduledSave() {
     if (saveTimeoutRef.current) {
@@ -660,6 +711,32 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setCurrentGame(game);
     setGames((current) => replaceGameRecord(current.length ? current : seedGames ?? current, game));
     setData(normalized);
+  }
+
+  function getAuthHeaders(extraHeaders?: HeadersInit) {
+    const headers = new Headers(extraHeaders);
+
+    if (authSession?.access_token) {
+      headers.set("Authorization", `Bearer ${authSession.access_token}`);
+    }
+
+    return headers;
+  }
+
+  async function loadWorkspaceOverview() {
+    const gamesResponse = await fetch("/api/games", {
+      cache: "no-store",
+      headers: getAuthHeaders()
+    });
+
+    if (!gamesResponse.ok) {
+      throw new Error("Unable to load games");
+    }
+
+    return readJson<{
+      games?: GameRecord[];
+      currentGame?: GameRecord | null;
+    }>(gamesResponse);
   }
 
   async function persistWorkspaceSnapshot(snapshot: AppData) {
@@ -722,20 +799,54 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    if (!isAuthConfigured) {
+      setIsAuthLoading(false);
+      return;
+    }
+
+    const supabase = getSupabaseBrowserClient();
+
+    if (!supabase) {
+      setIsAuthLoading(false);
+      return;
+    }
+
+    let active = true;
+
+    supabase.auth
+      .getSession()
+      .then(({ data: sessionData }) => {
+        if (!active) return;
+        setAuthSession(sessionData.session ?? null);
+        setAuthUser(toAuthUser(sessionData.session?.user));
+      })
+      .finally(() => {
+        if (active) {
+          setIsAuthLoading(false);
+        }
+      });
+
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!active) return;
+      setAuthSession(session);
+      setAuthUser(toAuthUser(session?.user));
+      setIsAuthLoading(false);
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, [isAuthConfigured]);
+
+  useEffect(() => {
     let active = true;
 
     async function bootstrap() {
       try {
-        const gamesResponse = await fetch("/api/games", {
-          cache: "no-store"
-        });
-        if (!gamesResponse.ok) {
-          throw new Error("Unable to load games");
-        }
-        const overview = await readJson<{
-          games?: GameRecord[];
-          currentGame?: GameRecord | null;
-        }>(gamesResponse);
+        const overview = await loadWorkspaceOverview();
 
         if (!active) return;
 
@@ -788,7 +899,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     return () => {
       active = false;
     };
-  }, []);
+  }, [authSession?.access_token]);
 
   useEffect(() => {
     if (!isReady || !currentGame) return;
@@ -813,20 +924,76 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     () => ({
       isReady,
       isAdminSession,
+      isAuthConfigured,
+      isAuthenticated: Boolean(authUser),
+      isAuthLoading,
+      authUser,
       games,
       currentGameId: currentGame?.id ?? null,
       currentGame,
       hasCurrentGame: Boolean(currentGame),
       data,
+      async signInWithPassword(input) {
+        const supabase = getSupabaseBrowserClient();
+
+        if (!supabase) {
+          return { ok: false, error: "Authentification Supabase indisponible." };
+        }
+
+        const { error } = await supabase.auth.signInWithPassword({
+          email: input.email.trim(),
+          password: input.password
+        });
+
+        if (error) {
+          return { ok: false, error: error.message };
+        }
+
+        return { ok: true };
+      },
+      async signUpWithPassword(input) {
+        const supabase = getSupabaseBrowserClient();
+
+        if (!supabase) {
+          return { ok: false, error: "Authentification Supabase indisponible." };
+        }
+
+        const { error } = await supabase.auth.signUp({
+          email: input.email.trim(),
+          password: input.password,
+          options: {
+            data: {
+              display_name: input.displayName?.trim() || undefined
+            }
+          }
+        });
+
+        if (error) {
+          return { ok: false, error: error.message };
+        }
+
+        return { ok: true };
+      },
+      async signOutUser() {
+        const supabase = getSupabaseBrowserClient();
+
+        try {
+          if (supabase) {
+            await supabase.auth.signOut();
+          }
+        } finally {
+          resetWorkspaceState();
+        }
+      },
       async createGame(input) {
         try {
           const response = await fetch("/api/games", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify(input)
-          });
+              method: "POST",
+              headers: getAuthHeaders({
+                "Content-Type": "application/json"
+              }),
+              body: JSON.stringify(input)
+            });
 
           if (!response.ok) {
             return {
@@ -844,14 +1011,14 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         }
       },
       async openGame(input) {
-        try {
-          const response = await fetch("/api/games/open", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify(input)
-          });
+          try {
+            const response = await fetch("/api/games/open", {
+              method: "POST",
+              headers: getAuthHeaders({
+                "Content-Type": "application/json"
+              }),
+              body: JSON.stringify(input)
+            });
 
           if (!response.ok) {
             return {
@@ -2280,7 +2447,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         });
       }
     }),
-    [currentGame, data, games, isAdminSession, isReady]
+    [
+      authSession,
+      authUser,
+      currentGame,
+      data,
+      games,
+      isAdminSession,
+      isAuthConfigured,
+      isAuthLoading,
+      isReady
+    ]
   );
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;

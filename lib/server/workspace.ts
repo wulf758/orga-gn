@@ -6,10 +6,12 @@ import {
   createAdminSession,
   createSession,
   createWorkspace,
+  getGameMembership,
   deleteAdminSession,
   deleteWorkspace,
   deleteSession,
   getAdminSession,
+  listUserMemberships,
   getSession,
   getWorkspaceById,
   listWorkspaces,
@@ -17,6 +19,8 @@ import {
   renameWorkspace,
   restoreWorkspace,
   toWorkspaceSummary,
+  upsertGameMembership,
+  upsertProfile,
   updateWorkspacePasswordHash,
   updateWorkspaceData,
   workspaceNameExists
@@ -99,6 +103,27 @@ export async function listWorkspaceOverview() {
   };
 }
 
+export async function listWorkspaceOverviewForUser(userId?: string | null) {
+  if (!userId) {
+    return listWorkspaceOverview();
+  }
+
+  const [current, memberships, games] = await Promise.all([
+    getCurrentWorkspaceContext(),
+    listUserMemberships(userId),
+    listWorkspaces()
+  ]);
+
+  const allowedIds = new Set(memberships.map((membership) => membership.gameId));
+  const allowedGames = games.filter((game) => allowedIds.has(game.id));
+  const currentIsAllowed = current ? allowedIds.has(current.workspace.id) : false;
+
+  return {
+    games: allowedGames.map(toWorkspaceSummary),
+    currentGame: currentIsAllowed ? current?.summary ?? null : null
+  };
+}
+
 export async function getCurrentAdminContext() {
   const cookieStore = await cookies();
   const currentToken = cookieStore.get(ADMIN_COOKIE_NAME)?.value;
@@ -137,8 +162,15 @@ export async function createWorkspaceWithAccess(input: {
   invitePassword: string;
   name: string;
   accessPassword: string;
+  creator?: {
+    id: string;
+    email?: string | null;
+    displayName?: string | null;
+  } | null;
 }) {
-  if (input.invitePassword !== getInvitationPassword()) {
+  const creator = input.creator ?? null;
+
+  if (!creator && input.invitePassword !== getInvitationPassword()) {
     return { ok: false as const, error: "Mot de passe d'invitation incorrect." };
   }
 
@@ -168,6 +200,18 @@ export async function createWorkspaceWithAccess(input: {
     return { ok: false as const, error: "Creation impossible." };
   }
 
+  if (creator) {
+    await upsertProfile({
+      id: creator.id,
+      displayName: creator.displayName ?? creator.email ?? null
+    });
+    await upsertGameMembership({
+      gameId: workspace.id,
+      userId: creator.id,
+      role: "admin"
+    });
+  }
+
   const token = createSessionToken();
   await createSession(workspaceId, hashSessionToken(token), sessionExpiryDate().toISOString());
 
@@ -185,6 +229,7 @@ export async function createWorkspaceWithAccess(input: {
 export async function openWorkspaceWithPassword(input: {
   id: string;
   accessPassword: string;
+  userId?: string | null;
 }) {
   const workspace = await getWorkspaceById(input.id);
 
@@ -196,9 +241,13 @@ export async function openWorkspaceWithPassword(input: {
     return { ok: false as const, error: "Ce GN est archive et n'est pas accessible." };
   }
 
+  const membership = input.userId
+    ? await getGameMembership(workspace.id, input.userId)
+    : null;
+
   const accessPassword = input.accessPassword.trim();
 
-  if (!verifyPassword(accessPassword, workspace.password_hash)) {
+  if (!membership && !verifyPassword(accessPassword, workspace.password_hash)) {
     return { ok: false as const, error: "Mot de passe incorrect." };
   }
 
