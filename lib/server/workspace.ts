@@ -50,11 +50,11 @@ export function clearWorkspaceSessionByToken(currentToken?: string | null) {
   }
 }
 
-export async function getCurrentWorkspaceContext() {
+export async function getCurrentWorkspaceContext(userId?: string | null) {
   const cookieStore = await cookies();
   const currentToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
-  if (!currentToken) {
+  if (!currentToken || !userId) {
     return null;
   }
 
@@ -74,18 +74,24 @@ export async function getCurrentWorkspaceContext() {
     return null;
   }
 
+  const membership = await getGameMembership(workspace.id, userId);
+
+  if (!membership) {
+    return null;
+  }
+
   return {
     session,
     workspace,
-    accessMode: "legacy-password" as WorkspaceAccessMode,
-    membershipRole: null,
+    accessMode: "membership" as WorkspaceAccessMode,
+    membershipRole: membership.role,
     summary: toWorkspaceSummary(workspace),
     data: sanitizeAppDataForRole(
       {
         ...parseWorkspace(workspace),
         gameName: workspace.name
       },
-      null
+      membership.role
     )
   };
 }
@@ -114,7 +120,7 @@ function sanitizeAppDataForRole(data: AppData, role?: MembershipRole | null) {
 }
 
 async function requireCurrentWorkspaceAdmin(userId?: string | null) {
-  const current = await getCurrentWorkspaceContext();
+  const current = await getCurrentWorkspaceContext(userId);
 
   if (!current) {
     return { ok: false as const, error: "Session invalide." };
@@ -141,12 +147,11 @@ async function requireCurrentWorkspaceAdmin(userId?: string | null) {
 }
 
 export async function listWorkspaceOverview() {
-  const current = await getCurrentWorkspaceContext();
   const games = await listWorkspaces();
 
   return {
     games: games.map(toWorkspaceSummary),
-    currentGame: current?.summary ?? null
+    currentGame: null
   };
 }
 
@@ -163,7 +168,7 @@ export async function listWorkspaceOverviewForAccount(user?: AuthenticatedUser |
   }
 
   const [current, memberships, games] = await Promise.all([
-    getCurrentWorkspaceContext(),
+    getCurrentWorkspaceContext(user.id),
     listUserMemberships(user.id),
     listWorkspaces()
   ]);
@@ -327,13 +332,13 @@ export async function saveCurrentWorkspace(data: AppData) {
 }
 
 export async function saveCurrentWorkspaceForUser(data: AppData, userId?: string | null) {
-  const current = await getCurrentWorkspaceContext();
+  const current = await getCurrentWorkspaceContext(userId);
 
   if (!current) {
     return { ok: false as const, error: "Session invalide." };
   }
 
-  const membershipRole = await resolveWorkspaceRoleForUser(current.workspace.id, userId);
+  const membershipRole = current.membershipRole;
 
   if (membershipRole && !canWriteWorkspace(membershipRole)) {
     return {
@@ -369,13 +374,13 @@ export async function renameCurrentWorkspaceForUser(
   nextName: string,
   userId?: string | null
 ) {
-  const current = await getCurrentWorkspaceContext();
+  const current = await getCurrentWorkspaceContext(userId);
 
   if (!current) {
     return { ok: false as const, error: "Session invalide." };
   }
 
-  const membershipRole = await resolveWorkspaceRoleForUser(current.workspace.id, userId);
+  const membershipRole = current.membershipRole;
 
   if (membershipRole && !canWriteWorkspace(membershipRole)) {
     return {
@@ -451,19 +456,19 @@ export async function getCurrentWorkspaceData() {
 }
 
 export async function getCurrentWorkspaceDataForUser(userId?: string | null) {
-  const current = await getCurrentWorkspaceContext();
+  const current = await getCurrentWorkspaceContext(userId);
 
   if (!current) {
     return null;
   }
 
-  const membershipRole = await resolveWorkspaceRoleForUser(current.workspace.id, userId);
+  const membershipRole = current.membershipRole;
 
   return {
     game: current.summary,
     data: sanitizeAppDataForRole(current.data, membershipRole),
     access: {
-      mode: membershipRole ? ("membership" as WorkspaceAccessMode) : ("legacy-password" as WorkspaceAccessMode),
+      mode: "membership" as WorkspaceAccessMode,
       role: membershipRole
     }
   };

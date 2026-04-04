@@ -58,9 +58,8 @@ npm run dev
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` : cle publique pour l'authentification utilisateur
 - `SUPABASE_SECRET_KEY` : cle serveur Supabase recommandee pour cette application
 - `SUPABASE_SERVICE_ROLE_KEY` : alternative legacy si tu utilises encore l'ancienne cle service role
-- `SUPER_ADMIN_DISPLAY_NAMES` : noms affiches autorises pour les restaurations et suppressions definitives
-- `SUPER_ADMIN_EMAILS` : alternative plus fiable si tu veux identifier le super-admin par email
-- `SUPER_ADMIN_USER_IDS` : alternative la plus stricte si tu veux identifier le super-admin par id Supabase
+- `SUPER_ADMIN_EMAILS` : emails autorises pour les restaurations et suppressions definitives
+- `SUPER_ADMIN_USER_IDS` : option la plus stricte pour identifier le super-admin par id Supabase
 
 Tu peux partir de `.env.example` pour creer ton propre `.env.local` en developpement, puis reporter ces variables sur ton hebergeur en production.
 
@@ -84,7 +83,7 @@ Tant que les variables Supabase ne sont pas definies, l'application continue d'u
    `NEXT_PUBLIC_SUPABASE_URL`
    `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    `SUPABASE_SECRET_KEY`
-   `SUPER_ADMIN_DISPLAY_NAMES`
+   `SUPER_ADMIN_EMAILS` ou `SUPER_ADMIN_USER_IDS`
 5. deployer
 
 Avec cette configuration, Vercel heberge l'application Next.js et Supabase remplace completement SQLite en production.
@@ -96,6 +95,8 @@ Le schema Supabase prepare maintenant la suite pour une authentification reelle 
 - `profiles` : profil utilisateur lie a `auth.users`
 - `game_memberships` : role par GN (`admin`, `orga`, `lecture`)
 - `SUPER_ADMIN_*` : filet de securite pour les archives et les actions de secours
+
+Pour la production, evite les noms affiches comme identifiant d'admin. Utilise `SUPER_ADMIN_EMAILS` ou, encore mieux, `SUPER_ADMIN_USER_IDS`.
 
 Le modele cible est bien un role **par GN** :
 
