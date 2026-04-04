@@ -218,6 +218,13 @@ export default function HomePage() {
     window.location.assign("/dashboard");
   }
 
+  function getRoleLabel(role?: string | null) {
+    if (role === "admin") return "admin";
+    if (role === "orga") return "orga";
+    if (role === "lecture") return "lecture";
+    return null;
+  }
+
   return (
     <>
       <PageHero
@@ -425,10 +432,32 @@ export default function HomePage() {
                 <article
                   key={game.id}
                   className={`workspace-card${selectedGameId === game.id ? " active" : ""}`}
+                  onClick={() => {
+                    setSelectedGameId(game.id);
+                    setArchiveError("");
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      setSelectedGameId(game.id);
+                      setArchiveError("");
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={selectedGameId === game.id}
                 >
                   <div className="workspace-card-header">
                     <h3>{game.name}</h3>
                     <span className="badge">{game.documentCount} docs</span>
+                  </div>
+                  <div className="badge-row">
+                    {getRoleLabel(game.role) ? (
+                      <span className="status-pill">{getRoleLabel(game.role)}</span>
+                    ) : null}
+                    {currentGame?.id === game.id ? (
+                      <span className="status-pill success">ouvert</span>
+                    ) : null}
                   </div>
                   <p>
                     {game.characterCount} personnages, {game.plotCount} intrigues,{" "}
@@ -438,7 +467,8 @@ export default function HomePage() {
                     <button
                       type="button"
                       className="button-primary"
-                      onClick={() => {
+                      onClick={(event) => {
+                        event.stopPropagation();
                         setSelectedGameId(game.id);
                         setArchiveError("");
                         void handleOpenGameById(game.id);
@@ -453,7 +483,8 @@ export default function HomePage() {
                       <Link
                         href={`/games/${game.id}/manage`}
                         className="button-secondary button-secondary-light"
-                        onClick={() => {
+                        onClick={(event) => {
+                          event.stopPropagation();
                           setSelectedGameId(game.id);
                           setArchiveError("");
                         }}
@@ -495,6 +526,20 @@ export default function HomePage() {
                       className={`workspace-card workspace-card-archived${
                         selectedGameId === game.id ? " active" : ""
                       }`}
+                      onClick={() => {
+                        setSelectedGameId(game.id);
+                        setArchiveError("");
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          setSelectedGameId(game.id);
+                          setArchiveError("");
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      aria-pressed={selectedGameId === game.id}
                     >
                       <div className="workspace-card-header">
                         <h3>{game.name}</h3>
@@ -511,7 +556,8 @@ export default function HomePage() {
                         <button
                           type="button"
                           className="button-primary"
-                          onClick={() => {
+                          onClick={(event) => {
+                            event.stopPropagation();
                             setSelectedGameId(game.id);
                             setArchiveError("");
                             void handleRestoreGameById(game.id);
@@ -525,7 +571,8 @@ export default function HomePage() {
                         <button
                           type="button"
                           className="button-danger"
-                          onClick={() => {
+                          onClick={(event) => {
+                            event.stopPropagation();
                             setSelectedGameId(game.id);
                             setArchiveError("");
                             void handleDeleteGamePermanentlyById(game.id);

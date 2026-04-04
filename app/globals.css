@@ -642,11 +642,17 @@ a.list-item:focus-visible {
   background: var(--panel);
   color: var(--text);
   cursor: pointer;
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease,
+    border-color 120ms ease,
+    background-color 120ms ease;
 }
 
 .workspace-card.active {
   border-color: rgba(142, 75, 43, 0.35);
   background: rgba(142, 75, 43, 0.08);
+  box-shadow: 0 14px 30px rgba(58, 29, 12, 0.1);
 }
 
 .workspace-card-archived {
