@@ -93,11 +93,6 @@ type AdminGameInput = {
   id: string;
 };
 
-type ResetGamePasswordInput = {
-  id: string;
-  nextAccessPassword: string;
-};
-
 type CreateDocumentInput = {
   kind: "folder" | "note";
   title: string;
@@ -318,7 +313,7 @@ type UpdateTagSectionInput = {
 
 type AppDataContextValue = {
   isReady: boolean;
-  isAdminSession: boolean;
+  isSuperAdmin: boolean;
   isAuthConfigured: boolean;
   isAuthenticated: boolean;
   isAuthLoading: boolean;
@@ -343,9 +338,6 @@ type AppDataContextValue = {
   signOutUser: () => Promise<void>;
   createGame: (input: CreateGameInput) => Promise<ActionResult>;
   openGame: (input: OpenGameInput) => Promise<ActionResult>;
-  openAdminSession: (password: string) => Promise<ActionResult>;
-  closeAdminSession: () => Promise<void>;
-  resetGamePassword: (input: ResetGamePasswordInput) => Promise<ActionResult>;
   archiveGame: (input: DeleteGameInput) => Promise<ActionResult>;
   restoreGame: (input: AdminGameInput) => Promise<ActionResult>;
   deleteGamePermanently: (input: AdminGameInput) => Promise<ActionResult>;
@@ -672,7 +664,7 @@ function toAuthUser(user: User | null | undefined): AuthUser | null {
 
 export function AppDataProvider({ children }: { children: ReactNode }) {
   const [isReady, setIsReady] = useState(false);
-  const [isAdminSession, setIsAdminSession] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(isSupabaseAuthConfigured());
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [authSession, setAuthSession] = useState<Session | null>(null);
@@ -874,14 +866,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         const nextCurrentGame = overview.currentGame ?? null;
 
         const adminResponse = await fetch("/api/admin/session", {
-          cache: "no-store"
+          cache: "no-store",
+          headers: getAuthHeaders()
         });
         const adminPayload = adminResponse.ok
-          ? await readJson<{ isAdminSession?: boolean }>(adminResponse)
-          : { isAdminSession: false };
+          ? await readJson<{ isSuperAdmin?: boolean }>(adminResponse)
+          : { isSuperAdmin: false };
 
         setGames(nextGames);
-        setIsAdminSession(Boolean(adminPayload.isAdminSession));
+        setIsSuperAdmin(Boolean(adminPayload.isSuperAdmin));
 
         if (!nextCurrentGame) {
           resetWorkspaceState();
@@ -910,7 +903,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       } catch {
         if (!active) return;
         setGames([]);
-        setIsAdminSession(false);
+        setIsSuperAdmin(false);
         resetWorkspaceState();
       } finally {
         if (active) {
@@ -948,7 +941,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const value = useMemo<AppDataContextValue>(
     () => ({
       isReady,
-      isAdminSession,
+      isSuperAdmin,
       isAuthConfigured,
       isAuthenticated: Boolean(authUser),
       isAuthLoading,
@@ -1073,69 +1066,6 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           return { ok: false, error: "Acces refuse." };
         }
       },
-      async openAdminSession(password) {
-        try {
-          const response = await fetch("/api/admin/session", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ password })
-          });
-
-          if (!response.ok) {
-            return {
-              ok: false,
-              error: await readActionError(response, "Acces administrateur refuse.")
-            };
-          }
-
-          setIsAdminSession(true);
-          return { ok: true };
-        } catch {
-          return { ok: false, error: "Acces administrateur refuse." };
-        }
-      },
-      async closeAdminSession() {
-        try {
-          await fetch("/api/admin/session", {
-            method: "DELETE"
-          });
-        } finally {
-          setIsAdminSession(false);
-        }
-      },
-      async resetGamePassword(input) {
-        try {
-          const response = await fetch(`/api/admin/games/${input.id}/password`, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              nextAccessPassword: input.nextAccessPassword
-            })
-          });
-
-          if (!response.ok) {
-            return {
-              ok: false,
-              error: await readActionError(response, "Reinitialisation impossible.")
-            };
-          }
-
-          const payload = await readJson<{ game: GameRecord }>(response);
-          setGames((current) => replaceGameRecord(current, payload.game));
-
-          if (currentGameRef.current?.id === payload.game.id) {
-            setCurrentGame(payload.game);
-          }
-
-          return { ok: true };
-        } catch {
-          return { ok: false, error: "Reinitialisation impossible." };
-        }
-      },
       async archiveGame(input) {
         try {
             const response = await fetch(`/api/games/${input.id}`, {
@@ -1175,7 +1105,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       async restoreGame(input) {
         try {
           const response = await fetch(`/api/admin/games/${input.id}`, {
-            method: "PATCH"
+            method: "PATCH",
+            headers: getAuthHeaders()
           });
 
           if (!response.ok) {
@@ -1195,7 +1126,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       async deleteGamePermanently(input) {
         try {
           const response = await fetch(`/api/admin/games/${input.id}`, {
-            method: "DELETE"
+            method: "DELETE",
+            headers: getAuthHeaders()
           });
 
           if (!response.ok) {
@@ -2490,7 +2422,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       currentGame,
       data,
       games,
-      isAdminSession,
+      isSuperAdmin,
       isAuthConfigured,
       isAuthLoading,
       isReady

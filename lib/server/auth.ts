@@ -1,20 +1,7 @@
 import { randomBytes, scryptSync, timingSafeEqual, createHash } from "node:crypto";
 
-const DEFAULT_INVITATION_PASSWORD = "HistoriaFantasiaGN";
-const DEFAULT_ADMIN_PASSWORD = "-00000080153612";
-
 export const SESSION_COOKIE_NAME = "hfgn-session";
 export const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 14;
-export const ADMIN_COOKIE_NAME = "hfgn-admin";
-export const ADMIN_SESSION_DURATION_SECONDS = 60 * 60 * 8;
-
-export function getInvitationPassword() {
-  return process.env.GN_INVITE_PASSWORD?.trim() || DEFAULT_INVITATION_PASSWORD;
-}
-
-export function getAdminPassword() {
-  return process.env.GN_ADMIN_PASSWORD?.trim() || DEFAULT_ADMIN_PASSWORD;
-}
 
 export function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");

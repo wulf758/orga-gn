@@ -3,16 +3,13 @@ import { cookies } from "next/headers";
 import { AppData, MembershipRole, WorkspaceAccessMode } from "@/lib/types";
 import {
   archiveWorkspace,
-  createAdminSession,
   createSession,
   createWorkspace,
   deleteGameMembership,
   getProfileById,
   getGameMembership,
-  deleteAdminSession,
   deleteWorkspace,
   deleteSession,
-  getAdminSession,
   listGameMemberships,
   listProfiles,
   listUserMemberships,
@@ -25,39 +22,29 @@ import {
   toWorkspaceSummary,
   upsertGameMembership,
   upsertProfile,
-  updateWorkspacePasswordHash,
   updateWorkspaceData,
   workspaceNameExists
 } from "@/lib/server/db";
 import {
-  ADMIN_COOKIE_NAME,
-  ADMIN_SESSION_DURATION_SECONDS,
   createSessionToken,
-  getAdminPassword,
   hashPassword,
   hashSessionToken,
   SESSION_COOKIE_NAME,
-  SESSION_DURATION_SECONDS,
+  SESSION_DURATION_SECONDS
 } from "@/lib/server/auth";
-import { canWriteWorkspace } from "@/lib/server/supabase-auth";
+import {
+  AuthenticatedUser,
+  canWriteWorkspace,
+  isSuperAdminUser
+} from "@/lib/server/supabase-auth";
 
 function sessionExpiryDate() {
   return new Date(Date.now() + SESSION_DURATION_SECONDS * 1000);
 }
 
-function adminSessionExpiryDate() {
-  return new Date(Date.now() + ADMIN_SESSION_DURATION_SECONDS * 1000);
-}
-
 export function clearWorkspaceSessionByToken(currentToken?: string | null) {
   if (currentToken) {
     void deleteSession(hashSessionToken(currentToken));
-  }
-}
-
-export function clearAdminSessionByToken(currentToken?: string | null) {
-  if (currentToken) {
-    void deleteAdminSession(hashSessionToken(currentToken));
   }
 }
 
@@ -162,7 +149,11 @@ export async function listWorkspaceOverview() {
 }
 
 export async function listWorkspaceOverviewForUser(userId?: string | null) {
-  if (!userId) {
+  return listWorkspaceOverviewForAccount(userId ? { id: userId, email: null, displayName: null } : null);
+}
+
+export async function listWorkspaceOverviewForAccount(user?: AuthenticatedUser | null) {
+  if (!user) {
     return {
       games: [],
       currentGame: null
@@ -171,51 +162,21 @@ export async function listWorkspaceOverviewForUser(userId?: string | null) {
 
   const [current, memberships, games] = await Promise.all([
     getCurrentWorkspaceContext(),
-    listUserMemberships(userId),
+    listUserMemberships(user.id),
     listWorkspaces()
   ]);
-
+  const superAdmin = isSuperAdminUser(user);
   const allowedIds = new Set(memberships.map((membership) => membership.gameId));
-  const allowedGames = games.filter((game) => allowedIds.has(game.id));
-  const currentIsAllowed = current ? allowedIds.has(current.workspace.id) : false;
+  const allowedGames = superAdmin
+    ? games
+    : games.filter((game) => allowedIds.has(game.id) && !game.archived_at);
+  const currentIsAllowed = current
+    ? superAdmin || (allowedIds.has(current.workspace.id) && !current.workspace.archived_at)
+    : false;
 
   return {
     games: allowedGames.map(toWorkspaceSummary),
     currentGame: currentIsAllowed ? current?.summary ?? null : null
-  };
-}
-
-export async function getCurrentAdminContext() {
-  const cookieStore = await cookies();
-  const currentToken = cookieStore.get(ADMIN_COOKIE_NAME)?.value;
-
-  if (!currentToken) {
-    return null;
-  }
-
-  const session = await getAdminSession(hashSessionToken(currentToken));
-
-  if (!session) {
-    return null;
-  }
-
-  return {
-    session,
-    isAdmin: true as const
-  };
-}
-
-export async function openAdminSessionWithPassword(password: string) {
-  if (password.trim() !== getAdminPassword()) {
-    return { ok: false as const, error: "Mot de passe administrateur incorrect." };
-  }
-
-  const token = createSessionToken();
-  await createAdminSession(hashSessionToken(token), adminSessionExpiryDate().toISOString());
-
-  return {
-    ok: true as const,
-    sessionToken: token
   };
 }
 
@@ -281,8 +242,8 @@ export async function createWorkspaceWithAccess(input: {
       null
     ),
     access: {
-      mode: "legacy-password" as WorkspaceAccessMode,
-      role: null
+      mode: "membership" as WorkspaceAccessMode,
+      role: "admin" as MembershipRole
     }
   };
 }
@@ -322,7 +283,7 @@ export async function openWorkspaceWithPassword(input: {
       membership?.role ?? null
     ),
     access: {
-      mode: membership ? ("membership" as WorkspaceAccessMode) : ("legacy-password" as WorkspaceAccessMode),
+      mode: "membership" as WorkspaceAccessMode,
       role: membership?.role ?? null
     }
   };
@@ -442,43 +403,6 @@ export async function getCurrentWorkspaceDataForUser(userId?: string | null) {
   };
 }
 
-export async function resetWorkspaceAccessPassword(input: {
-  id: string;
-  nextAccessPassword: string;
-}) {
-  const admin = await getCurrentAdminContext();
-
-  if (!admin) {
-    return { ok: false as const, error: "Session administrateur invalide." };
-  }
-
-  const workspace = await getWorkspaceById(input.id);
-
-  if (!workspace) {
-    return { ok: false as const, error: "GN introuvable." };
-  }
-
-  const nextAccessPassword = input.nextAccessPassword.trim();
-
-  if (!nextAccessPassword) {
-    return { ok: false as const, error: "Le nouveau mot de passe est requis." };
-  }
-
-  const updated = await updateWorkspacePasswordHash(
-    workspace.id,
-    hashPassword(nextAccessPassword)
-  );
-
-  if (!updated) {
-    return { ok: false as const, error: "Reinitialisation impossible." };
-  }
-
-  return {
-    ok: true as const,
-    game: toWorkspaceSummary(updated)
-  };
-}
-
 export async function archiveWorkspaceWithConfirmation(input: {
   id: string;
   confirmName: string;
@@ -523,11 +447,29 @@ export async function archiveWorkspaceWithConfirmation(input: {
   };
 }
 
-export async function restoreArchivedWorkspace(input: { id: string }) {
-  const admin = await getCurrentAdminContext();
+function requireSuperAdmin(user?: AuthenticatedUser | null) {
+  if (!user) {
+    return { ok: false as const, error: "Connexion utilisateur requise." };
+  }
 
-  if (!admin) {
-    return { ok: false as const, error: "Session administrateur invalide." };
+  if (!isSuperAdminUser(user)) {
+    return {
+      ok: false as const,
+      error: "Cet acces est reserve au super-admin."
+    };
+  }
+
+  return { ok: true as const };
+}
+
+export async function restoreArchivedWorkspace(input: {
+  id: string;
+  user?: AuthenticatedUser | null;
+}) {
+  const admin = requireSuperAdmin(input.user);
+
+  if (!admin.ok) {
+    return admin;
   }
 
   const workspace = await getWorkspaceById(input.id);
@@ -553,10 +495,17 @@ export async function restoreArchivedWorkspace(input: { id: string }) {
 }
 
 export async function deleteArchivedWorkspacePermanently(input: { id: string }) {
-  const admin = await getCurrentAdminContext();
+  return deleteArchivedWorkspacePermanentlyForAccount({ id: input.id, user: null });
+}
 
-  if (!admin) {
-    return { ok: false as const, error: "Session administrateur invalide." };
+export async function deleteArchivedWorkspacePermanentlyForAccount(input: {
+  id: string;
+  user?: AuthenticatedUser | null;
+}) {
+  const admin = requireSuperAdmin(input.user);
+
+  if (!admin.ok) {
+    return admin;
   }
 
   const workspace = await getWorkspaceById(input.id);

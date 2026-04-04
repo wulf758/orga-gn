@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import {
   createWorkspaceWithAccess,
-  listWorkspaceOverviewForUser
+  listWorkspaceOverviewForAccount
 } from "@/lib/server/workspace";
 import {
   getAuthenticatedUserFromAccessToken,
@@ -17,7 +17,7 @@ export async function GET(request: Request) {
   const currentUser = await getAuthenticatedUserFromAccessToken(
     getBearerTokenFromRequest(request)
   );
-  const payload = await listWorkspaceOverviewForUser(currentUser?.id ?? null);
+  const payload = await listWorkspaceOverviewForAccount(currentUser);
   return NextResponse.json(payload);
 }
 

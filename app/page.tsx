@@ -11,18 +11,16 @@ export default function HomePage() {
   const {
     archiveGame,
     authUser,
-    closeAdminSession,
     createGame,
     currentGame,
     deleteGamePermanently,
     games,
     hasCurrentGame,
-    isAdminSession,
     isAuthConfigured,
     isAuthenticated,
     isAuthLoading,
     isReady,
-    openAdminSession,
+    isSuperAdmin,
     openGame,
     restoreGame,
     signInWithPassword,
@@ -33,7 +31,6 @@ export default function HomePage() {
   const archivedGames = useMemo(() => games.filter((game) => game.archived), [games]);
 
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
-  const [adminPassword, setAdminPassword] = useState("");
   const [archiveConfirmName, setArchiveConfirmName] = useState("");
   const [newGameName, setNewGameName] = useState("");
   const [authEmail, setAuthEmail] = useState("");
@@ -43,13 +40,10 @@ export default function HomePage() {
   const [authSuccess, setAuthSuccess] = useState("");
   const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [isSubmittingAuth, setIsSubmittingAuth] = useState(false);
-  const [adminError, setAdminError] = useState("");
   const [createError, setCreateError] = useState("");
   const [archiveError, setArchiveError] = useState("");
   const [archiveSuccess, setArchiveSuccess] = useState("");
-  const [adminSuccess, setAdminSuccess] = useState("");
   const [isOpening, setIsOpening] = useState(false);
-  const [isOpeningAdmin, setIsOpeningAdmin] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
@@ -78,15 +72,7 @@ export default function HomePage() {
     setArchiveError("");
     setArchiveSuccess("");
     setArchiveConfirmName("");
-    setAdminError("");
-    setAdminSuccess("");
   }, [selectedGameId]);
-
-  useEffect(() => {
-    if (adminError) {
-      setAdminError("");
-    }
-  }, [adminPassword]);
 
   useEffect(() => {
     if (createError) {
@@ -117,12 +103,6 @@ export default function HomePage() {
       setArchiveSuccess("");
     }
   }, [archiveConfirmName, selectedGameId]);
-
-  useEffect(() => {
-    if (adminSuccess) {
-      setAdminSuccess("");
-    }
-  }, [adminPassword, selectedGameId]);
 
   async function handleOpenGame(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -225,26 +205,6 @@ export default function HomePage() {
     setIsArchiving(false);
   }
 
-  async function handleOpenAdminSession(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (isOpeningAdmin) return;
-
-    setIsOpeningAdmin(true);
-
-    const result = await openAdminSession(adminPassword);
-
-    if (!result.ok) {
-      setAdminError(result.error ?? "Acces administrateur refuse.");
-      setIsOpeningAdmin(false);
-      return;
-    }
-
-    setAdminPassword("");
-    setAdminError("");
-    setAdminSuccess("Administration des GN ouverte.");
-    setIsOpeningAdmin(false);
-  }
-
   async function handleRestoreGame() {
     if (!selectedGame || !selectedGame.archived || isRestoring) return;
 
@@ -252,13 +212,13 @@ export default function HomePage() {
     const result = await restoreGame({ id: selectedGame.id });
 
     if (!result.ok) {
-      setAdminError(result.error ?? "Restauration impossible.");
+      setArchiveError(result.error ?? "Restauration impossible.");
       setIsRestoring(false);
       return;
     }
 
-    setAdminError("");
-    setAdminSuccess(`Le GN "${selectedGame.name}" a ete restaure.`);
+    setArchiveError("");
+    setArchiveSuccess(`Le GN "${selectedGame.name}" a ete restaure.`);
     setIsRestoring(false);
   }
 
@@ -278,21 +238,14 @@ export default function HomePage() {
     const result = await deleteGamePermanently({ id: selectedGame.id });
 
     if (!result.ok) {
-      setAdminError(result.error ?? "Suppression definitive impossible.");
+      setArchiveError(result.error ?? "Suppression definitive impossible.");
       setIsDeletingPermanently(false);
       return;
     }
 
-    setAdminError("");
-    setAdminSuccess(`Le GN "${selectedGame.name}" a ete supprime definitivement.`);
+    setArchiveError("");
+    setArchiveSuccess(`Le GN "${selectedGame.name}" a ete supprime definitivement.`);
     setIsDeletingPermanently(false);
-  }
-
-  async function handleCloseAdminSession() {
-    await closeAdminSession();
-    setAdminPassword("");
-    setAdminError("");
-    setAdminSuccess("");
   }
 
   function handleResumeCurrentGame() {
@@ -331,6 +284,15 @@ export default function HomePage() {
                       <h3>{authUser.displayName || authUser.email || "Compte orga"}</h3>
                       <p>{authUser.email ?? "Adresse email indisponible."}</p>
                     </div>
+                    {isSuperAdmin ? (
+                      <div className="detail-block">
+                        <h3>Super-admin actif</h3>
+                        <p>
+                          Ton compte peut restaurer ou supprimer definitivement les GN archives
+                          depuis l'accueil.
+                        </p>
+                      </div>
+                    ) : null}
                     {authSuccess ? <div className="form-success">{authSuccess}</div> : null}
                     <div className="form-actions">
                       <button
@@ -446,55 +408,6 @@ export default function HomePage() {
                 </div>
               </form>
             </CreatePanel>
-
-            <CreatePanel
-              title="Administration des GN"
-              description="Cet acces reserve permet de restaurer un GN archive ou de le supprimer definitivement en secours."
-            >
-              {isAdminSession ? (
-                <div className="form-stack">
-                  <div className="detail-block admin-block">
-                    <h3>Administration active</h3>
-                    <p>Les actions sensibles sur les GN sont maintenant disponibles.</p>
-                  </div>
-                  {adminSuccess ? <div className="form-success">{adminSuccess}</div> : null}
-                  <div className="form-actions">
-                    <button
-                      type="button"
-                      className="button-secondary button-secondary-light"
-                      onClick={() => {
-                        void handleCloseAdminSession();
-                      }}
-                    >
-                      Fermer l'administration
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <form className="form-stack" onSubmit={handleOpenAdminSession}>
-                  <div className="field">
-                    <label htmlFor="admin-password">Mot de passe administrateur</label>
-                    <input
-                      id="admin-password"
-                      type="password"
-                      value={adminPassword}
-                      onChange={(event) => setAdminPassword(event.target.value)}
-                      disabled={isOpeningAdmin}
-                    />
-                  </div>
-                  {adminError ? <div className="form-error">{adminError}</div> : null}
-                  <div className="form-actions">
-                    <button
-                      type="submit"
-                      className="button-primary"
-                      disabled={isOpeningAdmin || !adminPassword.trim()}
-                    >
-                      {isOpeningAdmin ? "Ouverture..." : "Ouvrir l'administration"}
-                    </button>
-                  </div>
-                </form>
-              )}
-            </CreatePanel>
           </div>
         }
       />
@@ -508,7 +421,11 @@ export default function HomePage() {
         <div className="stat-block">
           <p className="stat-value">{archivedGames.length}</p>
           <p className="stat-label">GN archives</p>
-          <p className="stat-helper">restauration reservee a l'administration</p>
+          <p className="stat-helper">
+            {isSuperAdmin
+              ? "archives visibles pour le super-admin"
+              : "archives masquees hors super-admin"}
+          </p>
         </div>
         <div className="stat-block">
           <p className="stat-value">{currentGame ? "1" : "0"}</p>
@@ -569,7 +486,7 @@ export default function HomePage() {
             <div className="empty-state">Initialisation des espaces GN...</div>
           )}
 
-          {isAdminSession ? (
+          {isSuperAdmin ? (
             <div className="archive-section">
               <div className="section-header">
                 <div>
@@ -577,7 +494,7 @@ export default function HomePage() {
                   <h3 className="section-title section-title-small">GN archives</h3>
                   <p className="section-copy">
                     Les archives peuvent etre restaurees ou supprimees definitivement
-                    depuis l'administration.
+                    depuis le compte super-admin.
                   </p>
                 </div>
               </div>
@@ -592,8 +509,7 @@ export default function HomePage() {
                       }`}
                       onClick={() => {
                         setSelectedGameId(game.id);
-                        setAdminError("");
-                        setAdminSuccess("");
+                        setArchiveError("");
                       }}
                     >
                       <div className="workspace-card-header">
@@ -622,7 +538,7 @@ export default function HomePage() {
             <div>
               <p className="section-kicker">Acces</p>
               <h2 className="section-title">
-                {selectedGame?.archived ? "Administration de l'archive" : "Entrer dans un espace"}
+                {selectedGame?.archived ? "Gestion de l'archive" : "Entrer dans un espace"}
               </h2>
             </div>
           </div>
@@ -688,10 +604,11 @@ export default function HomePage() {
                     <h3>{selectedGame.name}</h3>
                     <p>
                       Ce GN est archive. Sa restauration et sa suppression definitive sont
-                      reservees au mode administrateur.
+                      reservees au super-admin.
                     </p>
                   </div>
-                  {isAdminSession ? (
+                  {archiveError ? <div className="form-error">{archiveError}</div> : null}
+                  {isSuperAdmin ? (
                     <div className="form-actions form-actions-column">
                       <button
                         type="button"
@@ -718,7 +635,7 @@ export default function HomePage() {
                     </div>
                   ) : (
                     <div className="empty-state">
-                      Activer l'administration pour restaurer ou supprimer cette archive.
+                      Cette archive ne peut etre geree que depuis le compte super-admin.
                     </div>
                   )}
                 </div>

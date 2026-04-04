@@ -6,6 +6,8 @@ export type AuthenticatedUser = {
   displayName: string | null;
 };
 
+const DEFAULT_SUPER_ADMIN_DISPLAY_NAMES = ["cyril"];
+
 function getSupabaseAuthConfig() {
   const url =
     process.env.SUPABASE_URL?.trim() || process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() || "";
@@ -31,6 +33,35 @@ function normalizeDisplayName(payload: Record<string, unknown>) {
     null;
 
   return candidate?.trim() || null;
+}
+
+function parseIdentityList(value?: string | null) {
+  return (value ?? "")
+    .split(",")
+    .map((entry) => entry.trim().toLocaleLowerCase())
+    .filter(Boolean);
+}
+
+export function isSuperAdminUser(user?: AuthenticatedUser | null) {
+  if (!user) {
+    return false;
+  }
+
+  const configuredIds = parseIdentityList(process.env.SUPER_ADMIN_USER_IDS);
+  const configuredEmails = parseIdentityList(process.env.SUPER_ADMIN_EMAILS);
+  const configuredNames = parseIdentityList(process.env.SUPER_ADMIN_DISPLAY_NAMES);
+  const effectiveNames =
+    configuredNames.length > 0 ? configuredNames : DEFAULT_SUPER_ADMIN_DISPLAY_NAMES;
+
+  const userId = user.id.trim().toLocaleLowerCase();
+  const email = user.email?.trim().toLocaleLowerCase() ?? "";
+  const displayName = user.displayName?.trim().toLocaleLowerCase() ?? "";
+
+  return (
+    configuredIds.includes(userId) ||
+    (email ? configuredEmails.includes(email) : false) ||
+    (displayName ? effectiveNames.includes(displayName) : false)
+  );
 }
 
 export async function getAuthenticatedUserFromAccessToken(accessToken?: string | null) {
