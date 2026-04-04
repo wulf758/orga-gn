@@ -214,3 +214,5 @@ export type GameMembership = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type WorkspaceAccessMode = "legacy-password" | "membership";

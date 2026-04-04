@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 
-import { AppData } from "@/lib/types";
+import { AppData, WorkspaceAccessMode } from "@/lib/types";
 import {
   archiveWorkspace,
   createAdminSession,
@@ -37,6 +37,7 @@ import {
   SESSION_DURATION_SECONDS,
   verifyPassword
 } from "@/lib/server/auth";
+import { canWriteWorkspace } from "@/lib/server/supabase-auth";
 
 function sessionExpiryDate() {
   return new Date(Date.now() + SESSION_DURATION_SECONDS * 1000);
@@ -85,12 +86,23 @@ export async function getCurrentWorkspaceContext() {
   return {
     session,
     workspace,
+    accessMode: "legacy-password" as WorkspaceAccessMode,
+    membershipRole: null,
     summary: toWorkspaceSummary(workspace),
     data: {
       ...parseWorkspace(workspace),
       gameName: workspace.name
     }
   };
+}
+
+async function resolveWorkspaceRoleForUser(workspaceId: string, userId?: string | null) {
+  if (!userId) {
+    return null;
+  }
+
+  const membership = await getGameMembership(workspaceId, userId);
+  return membership?.role ?? null;
 }
 
 export async function listWorkspaceOverview() {
@@ -266,10 +278,23 @@ export async function openWorkspaceWithPassword(input: {
 }
 
 export async function saveCurrentWorkspace(data: AppData) {
+  return saveCurrentWorkspaceForUser(data, null);
+}
+
+export async function saveCurrentWorkspaceForUser(data: AppData, userId?: string | null) {
   const current = await getCurrentWorkspaceContext();
 
   if (!current) {
     return { ok: false as const, error: "Session invalide." };
+  }
+
+  const membershipRole = await resolveWorkspaceRoleForUser(current.workspace.id, userId);
+
+  if (membershipRole && !canWriteWorkspace(membershipRole)) {
+    return {
+      ok: false as const,
+      error: "Cet espace est ouvert en lecture seule pour ton compte."
+    };
   }
 
   const updated = await updateWorkspaceData(current.workspace.id, data);
@@ -289,10 +314,26 @@ export async function saveCurrentWorkspace(data: AppData) {
 }
 
 export async function renameCurrentWorkspace(nextName: string) {
+  return renameCurrentWorkspaceForUser(nextName, null);
+}
+
+export async function renameCurrentWorkspaceForUser(
+  nextName: string,
+  userId?: string | null
+) {
   const current = await getCurrentWorkspaceContext();
 
   if (!current) {
     return { ok: false as const, error: "Session invalide." };
+  }
+
+  const membershipRole = await resolveWorkspaceRoleForUser(current.workspace.id, userId);
+
+  if (membershipRole && !canWriteWorkspace(membershipRole)) {
+    return {
+      ok: false as const,
+      error: "Cet espace est ouvert en lecture seule pour ton compte."
+    };
   }
 
   const trimmedName = nextName.trim();
@@ -322,15 +363,25 @@ export async function renameCurrentWorkspace(nextName: string) {
 }
 
 export async function getCurrentWorkspaceData() {
+  return getCurrentWorkspaceDataForUser(null);
+}
+
+export async function getCurrentWorkspaceDataForUser(userId?: string | null) {
   const current = await getCurrentWorkspaceContext();
 
   if (!current) {
     return null;
   }
 
+  const membershipRole = await resolveWorkspaceRoleForUser(current.workspace.id, userId);
+
   return {
     game: current.summary,
-    data: current.data
+    data: current.data,
+    access: {
+      mode: membershipRole ? ("membership" as WorkspaceAccessMode) : ("legacy-password" as WorkspaceAccessMode),
+      role: membershipRole
+    }
   };
 }
 

@@ -16,7 +16,7 @@ import {
 import { isPriorityTag } from "@/lib/tags";
 
 export default function DashboardPage() {
-  const { data } = useAppData();
+  const { data, isCurrentGameReadOnly, workspaceAccess } = useAppData();
   const organizationCategoryMap = Object.fromEntries(
     data.organizationCategories.map((category) => [category.slug, category.title])
   );
@@ -212,6 +212,18 @@ export default function DashboardPage() {
 
   return (
     <>
+      {isCurrentGameReadOnly ? (
+        <section className="surface-grid">
+          <div className="surface span-12">
+            <p className="section-kicker">Acces</p>
+            <h2 className="section-title section-title-small">Lecture seule</h2>
+            <p className="section-copy">
+              Ton compte est actuellement membre <strong>{workspaceAccess?.role}</strong> sur ce
+              GN. Tu peux consulter le contenu, mais pas enregistrer de modifications.
+            </p>
+          </div>
+        </section>
+      ) : null}
       <PageHero
         kicker="Espace de travail / cockpit orga"
         title="Un atelier central pour ecrire et piloter le GN."

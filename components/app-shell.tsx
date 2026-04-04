@@ -14,7 +14,15 @@ type AppShellProps = {
 
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
-  const { data, hasCurrentGame, isReady, leaveGame, updateGameName } = useAppData();
+  const {
+    data,
+    hasCurrentGame,
+    isCurrentGameReadOnly,
+    isReady,
+    leaveGame,
+    updateGameName,
+    workspaceAccess
+  } = useAppData();
   const [isEditingName, setIsEditingName] = useState(false);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [draftName, setDraftName] = useState(data.gameName);
@@ -89,6 +97,15 @@ export function AppShell({ children }: AppShellProps) {
     <div className="app-shell">
       <aside className={`sidebar${isSidebarExpanded ? " sidebar-expanded" : ""}`}>
         <span className="brand-mark">Atelier orga</span>
+        {workspaceAccess?.role ? (
+          <span className="brand-mark">
+            {workspaceAccess.role === "admin"
+              ? "Role admin"
+              : workspaceAccess.role === "orga"
+              ? "Role orga"
+              : "Lecture seule"}
+          </span>
+        ) : null}
         <div className="brand-title-row">
           <h1 className="brand-title">{data.gameName}</h1>
           <div className="brand-title-actions">
@@ -116,6 +133,11 @@ export function AppShell({ children }: AppShellProps) {
         <div id="sidebar-mobile-panel" className="sidebar-mobile-panel">
           {isEditingName ? (
             <form className="brand-settings-panel" onSubmit={handleSubmit}>
+              {isCurrentGameReadOnly ? (
+                <div className="form-error">
+                  Ce GN est ouvert en lecture seule pour ton compte.
+                </div>
+              ) : null}
               <label htmlFor="game-name-input" className="brand-settings-label">
                 Nom du GN
               </label>
@@ -124,9 +146,10 @@ export function AppShell({ children }: AppShellProps) {
                 value={draftName}
                 onChange={(event) => setDraftName(event.target.value)}
                 className="brand-settings-input"
+                disabled={isCurrentGameReadOnly}
               />
               <div className="brand-settings-actions">
-                <button type="submit" className="button-primary">
+                <button type="submit" className="button-primary" disabled={isCurrentGameReadOnly}>
                   Enregistrer
                 </button>
                 <button

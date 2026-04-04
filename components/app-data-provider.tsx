@@ -17,6 +17,7 @@ import {
   Character,
   Deadline,
   DocumentPage,
+  MembershipRole,
   KraftItem,
   Meeting,
   Plot,
@@ -68,6 +69,11 @@ type AuthUser = {
   id: string;
   email: string | null;
   displayName: string | null;
+};
+
+type WorkspaceAccessState = {
+  mode: "legacy-password" | "membership";
+  role: MembershipRole | null;
 };
 
 type CreateGameInput = {
@@ -321,6 +327,8 @@ type AppDataContextValue = {
   isAuthenticated: boolean;
   isAuthLoading: boolean;
   authUser: AuthUser | null;
+  workspaceAccess: WorkspaceAccessState | null;
+  isCurrentGameReadOnly: boolean;
   games: GameRecord[];
   currentGameId: string | null;
   currentGame: GameRecord | null;
@@ -671,6 +679,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [isAuthLoading, setIsAuthLoading] = useState(isSupabaseAuthConfigured());
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [authSession, setAuthSession] = useState<Session | null>(null);
+  const [workspaceAccess, setWorkspaceAccess] = useState<WorkspaceAccessState | null>(null);
   const [games, setGames] = useState<GameRecord[]>([]);
   const [currentGame, setCurrentGame] = useState<GameRecord | null>(null);
   const [data, setData] = useState<AppData>(getEmptyAppData);
@@ -697,6 +706,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     latestDataRef.current = emptyData;
     skipNextSaveRef.current = true;
     queuedPersistRef.current = false;
+    setWorkspaceAccess(null);
     setCurrentGame(null);
     setData(emptyData);
   }
@@ -877,11 +887,16 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        const workspace = await readJson<{ game: GameRecord; data: AppData }>(workspaceResponse);
+        const workspace = await readJson<{
+          game: GameRecord;
+          data: AppData;
+          access?: WorkspaceAccessState;
+        }>(workspaceResponse);
 
         if (!active) return;
 
         commitWorkspace(workspace.game, workspace.data, nextGames);
+        setWorkspaceAccess(workspace.access ?? null);
       } catch {
         if (!active) return;
         setGames([]);
@@ -928,6 +943,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       isAuthenticated: Boolean(authUser),
       isAuthLoading,
       authUser,
+      workspaceAccess,
+      isCurrentGameReadOnly: workspaceAccess?.role === "lecture",
       games,
       currentGameId: currentGame?.id ?? null,
       currentGame,
@@ -1002,10 +1019,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             };
           }
 
-          const payload = await readJson<{ game: GameRecord; data: AppData }>(response);
-          commitWorkspace(payload.game, payload.data);
+            const payload = await readJson<{
+              game: GameRecord;
+              data: AppData;
+              access?: WorkspaceAccessState;
+            }>(response);
+            commitWorkspace(payload.game, payload.data);
+            setWorkspaceAccess(payload.access ?? null);
 
-          return { ok: true };
+            return { ok: true };
         } catch {
           return { ok: false, error: "Creation impossible." };
         }
@@ -1027,10 +1049,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             };
           }
 
-          const payload = await readJson<{ game: GameRecord; data: AppData }>(response);
-          commitWorkspace(payload.game, payload.data);
+            const payload = await readJson<{
+              game: GameRecord;
+              data: AppData;
+              access?: WorkspaceAccessState;
+            }>(response);
+            commitWorkspace(payload.game, payload.data);
+            setWorkspaceAccess(payload.access ?? null);
 
-          return { ok: true };
+            return { ok: true };
         } catch {
           return { ok: false, error: "Acces refuse." };
         }
@@ -2457,6 +2484,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       isAuthConfigured,
       isAuthLoading,
       isReady
+      ,
+      workspaceAccess
     ]
   );
 
