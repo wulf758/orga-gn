@@ -31,6 +31,7 @@ import {
   WorkspaceSummary
 } from "@/lib/types";
 import { formatDateLabel, formatDateTimeLabel } from "@/lib/date-utils";
+import { parseDocumentContent } from "@/lib/document-content";
 import {
   getMergedTagDefinitions,
   getMergedTagSections,
@@ -1134,18 +1135,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
                           .map((tag) => tag.trim())
                           .filter(Boolean)
                       : document.tags,
-                  content:
-                    typeof input.contentText === "string" && document.kind === "note"
-                      ? [
-                          {
-                            heading: input.title,
-                            paragraphs: input.contentText
-                              .split("\n")
-                              .map((line) => line.trim())
-                              .filter(Boolean)
-                          }
-                        ]
-                      : document.content,
+                    content:
+                      typeof input.contentText === "string" && document.kind === "note"
+                        ? parseDocumentContent(input.contentText, input.title)
+                        : document.content,
                   updatedAt: "A l'instant"
                 }
               : document

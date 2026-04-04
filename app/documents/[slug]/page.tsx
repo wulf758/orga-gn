@@ -10,6 +10,7 @@ import { PageHero } from "@/components/page-hero";
 import { RichTextPreview } from "@/components/rich-text-preview";
 import { TagBadge } from "@/components/tag-badge";
 import { TagPicker } from "@/components/tag-picker";
+import { serializeDocumentContent } from "@/lib/document-content";
 
 export default function DocumentDetailPage() {
   const params = useParams<{ slug: string }>();
@@ -21,7 +22,7 @@ export default function DocumentDetailPage() {
   const [summary, setSummary] = useState(document?.summary ?? "");
   const [category, setCategory] = useState(document?.category ?? "");
   const [contentText, setContentText] = useState(
-    document?.content.flatMap((section) => section.paragraphs).join("\n\n") ?? ""
+    document ? serializeDocumentContent(document.content, document.title) : ""
   );
   const [selectedTags, setSelectedTags] = useState<string[]>(document?.tags ?? []);
   const [isEditingNote, setIsEditingNote] = useState(false);
@@ -77,7 +78,7 @@ export default function DocumentDetailPage() {
     setSummary(currentDocument.summary);
     setCategory(currentDocument.category);
     setSelectedTags(currentDocument.tags);
-    setContentText(currentDocument.content.flatMap((section) => section.paragraphs).join("\n\n"));
+    setContentText(serializeDocumentContent(currentDocument.content, currentDocument.title));
     setIsEditingNote(false);
   }
 
@@ -388,6 +389,9 @@ export default function DocumentDetailPage() {
                 </div>
                 <div className="field">
                   <label htmlFor="note-edit-content">Contenu</label>
+                  <p className="field-help">
+                    Utilise `## Titre de section` pour separer les blocs, et `- element` pour les listes.
+                  </p>
                   <div className="editor-toolbar note-toolbar">
                     <button
                       type="button"
@@ -437,6 +441,7 @@ export default function DocumentDetailPage() {
               <div className="note-read-content">
                 {currentDocument.content.map((section) => (
                   <section key={section.heading}>
+                    <h3>{section.heading}</h3>
                     <RichTextPreview text={section.paragraphs.join("\n\n")} />
                     {section.bullets ? (
                       <ul>
