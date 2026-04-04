@@ -33,6 +33,10 @@ import {
 import { formatDateLabel, formatDateTimeLabel } from "@/lib/date-utils";
 import { parseDocumentContent } from "@/lib/document-content";
 import {
+  deleteTagAcrossAppData,
+  renameTagAcrossAppData
+} from "@/lib/tag-mutations";
+import {
   getMergedTagDefinitions,
   getMergedTagSections,
   isSystemTagLabel,
@@ -380,16 +384,6 @@ function makeCategory(section: CategorySection, title: string, summary: string):
     updatedAt: "A l'instant",
     tags: [section]
   };
-}
-
-function renameTagInList(tags: string[], previousLabel: string, nextLabel: string) {
-  return Array.from(
-    new Set(
-      tags.map((tag) =>
-        normalizeTagLabel(tag) === normalizeTagLabel(previousLabel) ? nextLabel : tag
-      )
-    )
-  );
 }
 
 function upsertTagSection(
@@ -1509,8 +1503,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           const sameSection =
             normalizeTagSection(target.section) === normalizeTagSection(input.section);
 
+          const nextData = renameTagAcrossAppData(current, target.label, nextLabel);
+
           return {
-            ...current,
+            ...nextData,
             tagSections: upsertTagSection(current.tagSections, input.section, input.sectionColor),
             tagsRegistry: current.tagsRegistry
               .map((definition) =>
@@ -1529,50 +1525,6 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
                   : definition
               )
               .sort((left, right) => left.label.localeCompare(right.label)),
-            documents: current.documents.map((document) => ({
-              ...document,
-              tags: renameTagInList(document.tags, target.label, nextLabel)
-            })),
-            plotCategories: current.plotCategories.map((category) => ({
-              ...category,
-              tags: renameTagInList(category.tags, target.label, nextLabel)
-            })),
-            plots: current.plots.map((plot) => ({
-              ...plot,
-              tags: renameTagInList(plot.tags, target.label, nextLabel)
-            })),
-            organizationCategories: current.organizationCategories.map((category) => ({
-              ...category,
-              tags: renameTagInList(category.tags, target.label, nextLabel)
-            })),
-            tasks: current.tasks.map((task) => ({
-              ...task,
-              tags: renameTagInList(task.tags, target.label, nextLabel)
-            })),
-            meetingCategories: current.meetingCategories.map((category) => ({
-              ...category,
-              tags: renameTagInList(category.tags, target.label, nextLabel)
-            })),
-            meetings: current.meetings.map((meeting) => ({
-              ...meeting,
-              tags: renameTagInList(meeting.tags, target.label, nextLabel)
-            })),
-            characters: current.characters.map((character) => ({
-              ...character,
-              tags: renameTagInList(character.tags, target.label, nextLabel)
-            })),
-            timelineEntries: current.timelineEntries.map((entry) => ({
-              ...entry,
-              tags: renameTagInList(entry.tags, target.label, nextLabel)
-            })),
-            storyboardScenes: current.storyboardScenes.map((scene) => ({
-              ...scene,
-              tags: renameTagInList(scene.tags, target.label, nextLabel)
-            })),
-            kraftItems: current.kraftItems.map((item) => ({
-              ...item,
-              tags: renameTagInList(item.tags, target.label, nextLabel)
-            })),
             updates: [
               makeUpdate(
                 "Tags",
@@ -1594,56 +1546,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             return current;
           }
 
-          const removeFromList = (tags: string[]) =>
-            tags.filter((tag) => normalizeTagLabel(tag) !== normalizeTagLabel(target.label));
+          const nextData = deleteTagAcrossAppData(current, target.label);
 
           return {
-            ...current,
+            ...nextData,
             tagsRegistry: current.tagsRegistry.filter((definition) => definition.id !== id),
-            documents: current.documents.map((document) => ({
-              ...document,
-              tags: removeFromList(document.tags)
-            })),
-            plotCategories: current.plotCategories.map((category) => ({
-              ...category,
-              tags: removeFromList(category.tags)
-            })),
-            plots: current.plots.map((plot) => ({
-              ...plot,
-              tags: removeFromList(plot.tags)
-            })),
-            organizationCategories: current.organizationCategories.map((category) => ({
-              ...category,
-              tags: removeFromList(category.tags)
-            })),
-            tasks: current.tasks.map((task) => ({
-              ...task,
-              tags: removeFromList(task.tags)
-            })),
-            meetingCategories: current.meetingCategories.map((category) => ({
-              ...category,
-              tags: removeFromList(category.tags)
-            })),
-            meetings: current.meetings.map((meeting) => ({
-              ...meeting,
-              tags: removeFromList(meeting.tags)
-            })),
-            characters: current.characters.map((character) => ({
-              ...character,
-              tags: removeFromList(character.tags)
-            })),
-            timelineEntries: current.timelineEntries.map((entry) => ({
-              ...entry,
-              tags: removeFromList(entry.tags)
-            })),
-            storyboardScenes: current.storyboardScenes.map((scene) => ({
-              ...scene,
-              tags: removeFromList(scene.tags)
-            })),
-            kraftItems: current.kraftItems.map((item) => ({
-              ...item,
-              tags: removeFromList(item.tags)
-            })),
             updates: [
               makeUpdate(
                 "Tags",
