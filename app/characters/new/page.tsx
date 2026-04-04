@@ -17,7 +17,7 @@ function toLines(value: string) {
 
 export default function NewCharacterPage() {
   const router = useRouter();
-  const { data, createCharacter } = useAppData();
+  const { canViewPlayerInfo, data, createCharacter } = useAppData();
   const [name, setName] = useState("");
   const [role, setRole] = useState<"PJ" | "PNJ">("PJ");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -106,15 +106,17 @@ export default function NewCharacterPage() {
                   }
                 />
               </div>
-              <div className="field">
-                <label htmlFor="character-create-player-notes">Joueur / contraintes</label>
-                <textarea
-                  id="character-create-player-notes"
-                  value={playerNotes}
-                  onChange={(event) => setPlayerNotes(event.target.value)}
-                  placeholder="Allergies, phobies, limites de jeu, besoins particuliers..."
-                />
-              </div>
+              {canViewPlayerInfo ? (
+                <div className="field">
+                  <label htmlFor="character-create-player-notes">Joueur / contraintes</label>
+                  <textarea
+                    id="character-create-player-notes"
+                    value={playerNotes}
+                    onChange={(event) => setPlayerNotes(event.target.value)}
+                    placeholder="Allergies, phobies, limites de jeu, besoins particuliers..."
+                  />
+                </div>
+              ) : null}
               <div className="field">
                 <label htmlFor="character-create-background">Background</label>
                 <textarea

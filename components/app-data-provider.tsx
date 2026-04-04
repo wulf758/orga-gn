@@ -329,6 +329,7 @@ type AppDataContextValue = {
   authUser: AuthUser | null;
   workspaceAccess: WorkspaceAccessState | null;
   isCurrentGameReadOnly: boolean;
+  canViewPlayerInfo: boolean;
   games: GameRecord[];
   currentGameId: string | null;
   currentGame: GameRecord | null;
@@ -958,6 +959,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       authUser,
       workspaceAccess,
       isCurrentGameReadOnly: workspaceAccess?.role === "lecture",
+      canViewPlayerInfo: workspaceAccess?.role !== "lecture",
       games,
       currentGameId: currentGame?.id ?? null,
       currentGame,

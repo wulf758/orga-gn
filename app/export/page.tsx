@@ -76,7 +76,7 @@ const exportOptions: ExportOption[] = [
 ];
 
 export default function ExportPage() {
-  const { data } = useAppData();
+  const { canViewPlayerInfo, data } = useAppData();
   const [selected, setSelected] = useState<ExportKey[]>([
     "documents",
     "pj",
@@ -184,7 +184,9 @@ export default function ExportPage() {
                       <small>{option.description}</small>
                     </span>
                   </label>
-                  {(option.key === "pj" || option.key === "pnj") && selectedSet.has(option.key) ? (
+                  {canViewPlayerInfo &&
+                  (option.key === "pj" || option.key === "pnj") &&
+                  selectedSet.has(option.key) ? (
                     <label className="export-sub-option">
                       <input
                         type="checkbox"

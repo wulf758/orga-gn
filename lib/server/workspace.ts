@@ -93,10 +93,13 @@ export async function getCurrentWorkspaceContext() {
     accessMode: "legacy-password" as WorkspaceAccessMode,
     membershipRole: null,
     summary: toWorkspaceSummary(workspace),
-    data: {
-      ...parseWorkspace(workspace),
-      gameName: workspace.name
-    }
+    data: sanitizeAppDataForRole(
+      {
+        ...parseWorkspace(workspace),
+        gameName: workspace.name
+      },
+      null
+    )
   };
 }
 
@@ -107,6 +110,20 @@ async function resolveWorkspaceRoleForUser(workspaceId: string, userId?: string 
 
   const membership = await getGameMembership(workspaceId, userId);
   return membership?.role ?? null;
+}
+
+function sanitizeAppDataForRole(data: AppData, role?: MembershipRole | null) {
+  if (role !== "lecture") {
+    return data;
+  }
+
+  return {
+    ...data,
+    characters: data.characters.map((character) => ({
+      ...character,
+      playerNotes: ""
+    }))
+  };
 }
 
 async function requireCurrentWorkspaceAdmin(userId?: string | null) {
@@ -262,9 +279,16 @@ export async function createWorkspaceWithAccess(input: {
     ok: true as const,
     sessionToken: token,
     game: toWorkspaceSummary(workspace),
-    data: {
-      ...parseWorkspace(workspace),
-      gameName: workspace.name
+    data: sanitizeAppDataForRole(
+      {
+        ...parseWorkspace(workspace),
+        gameName: workspace.name
+      },
+      null
+    ),
+    access: {
+      mode: "legacy-password" as WorkspaceAccessMode,
+      role: null
     }
   };
 }
@@ -301,9 +325,16 @@ export async function openWorkspaceWithPassword(input: {
     ok: true as const,
     sessionToken: token,
     game: toWorkspaceSummary(workspace),
-    data: {
-      ...parseWorkspace(workspace),
-      gameName: workspace.name
+    data: sanitizeAppDataForRole(
+      {
+        ...parseWorkspace(workspace),
+        gameName: workspace.name
+      },
+      membership?.role ?? null
+    ),
+    access: {
+      mode: membership ? ("membership" as WorkspaceAccessMode) : ("legacy-password" as WorkspaceAccessMode),
+      role: membership?.role ?? null
     }
   };
 }
@@ -337,10 +368,13 @@ export async function saveCurrentWorkspaceForUser(data: AppData, userId?: string
   return {
     ok: true as const,
     game: toWorkspaceSummary(updated),
-    data: {
-      ...parseWorkspace(updated),
-      gameName: updated.name
-    }
+    data: sanitizeAppDataForRole(
+      {
+        ...parseWorkspace(updated),
+        gameName: updated.name
+      },
+      membershipRole
+    )
   };
 }
 
@@ -386,10 +420,13 @@ export async function renameCurrentWorkspaceForUser(
   return {
     ok: true as const,
     game: toWorkspaceSummary(updated),
-    data: {
-      ...parseWorkspace(updated),
-      gameName: updated.name
-    }
+    data: sanitizeAppDataForRole(
+      {
+        ...parseWorkspace(updated),
+        gameName: updated.name
+      },
+      membershipRole
+    )
   };
 }
 
@@ -408,7 +445,7 @@ export async function getCurrentWorkspaceDataForUser(userId?: string | null) {
 
   return {
     game: current.summary,
-    data: current.data,
+    data: sanitizeAppDataForRole(current.data, membershipRole),
     access: {
       mode: membershipRole ? ("membership" as WorkspaceAccessMode) : ("legacy-password" as WorkspaceAccessMode),
       role: membershipRole

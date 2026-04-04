@@ -213,6 +213,13 @@ export default function MembersPage() {
               </div>
             ) : (
               <form className="form-stack" onSubmit={handleAddMember}>
+                <div className="detail-block">
+                  <h3>Annuaire local</h3>
+                  <p>
+                    Cette liste reprend les comptes qui se sont deja connectes au moins une fois
+                    dans l'application.
+                  </p>
+                </div>
                 <div className="field">
                   <label htmlFor="member-profile">Compte existant</label>
                   <select
@@ -222,7 +229,7 @@ export default function MembersPage() {
                     disabled={!availableProfiles.length || isSubmitting}
                   >
                     {!availableProfiles.length ? (
-                      <option value="">Aucun autre compte disponible</option>
+                      <option value="">Aucun autre compte disponible pour le moment</option>
                     ) : null}
                     {availableProfiles.map((profile) => (
                       <option key={profile.id} value={profile.id}>
@@ -286,10 +293,17 @@ export default function MembersPage() {
                 return (
                   <article key={member.membership.id} className="workspace-card">
                     <div className="workspace-card-header">
-                      <h3>{label}</h3>
+                      <h3>
+                        {label}
+                        {member.profile?.id === authUser?.id ? " (toi)" : ""}
+                      </h3>
                       <span className="badge">{member.membership.role}</span>
                     </div>
-                    <p>{member.profile?.id === authUser?.id ? "Compte actuellement connecte." : "Compte orga rattache a ce GN."}</p>
+                    <p>
+                      {member.profile?.id === authUser?.id
+                        ? "Compte actuellement connecte sur ce navigateur."
+                        : "Compte orga rattache a ce GN."}
+                    </p>
                     <div className="form-actions">
                       <select
                         value={member.membership.role}

@@ -21,7 +21,7 @@ function toLines(value: string) {
 export default function CharacterDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { data, deleteCharacter, updateCharacter } = useAppData();
+  const { canViewPlayerInfo, data, deleteCharacter, updateCharacter } = useAppData();
   const character = data.characters.find((entry) => entry.id === params.id);
   const backgroundRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -132,10 +132,12 @@ export default function CharacterDetailPage() {
               <h3>Type</h3>
               <p>{currentCharacter.role}</p>
             </div>
-            <div className="detail-block">
-              <h3>Joueur</h3>
-              <p>{currentCharacter.playerNotes?.trim() || "Aucune information joueur renseignee pour le moment."}</p>
-            </div>
+            {canViewPlayerInfo ? (
+              <div className="detail-block">
+                <h3>Joueur</h3>
+                <p>{currentCharacter.playerNotes?.trim() || "Aucune information joueur renseignee pour le moment."}</p>
+              </div>
+            ) : null}
           </div>
         }
       />
@@ -183,15 +185,17 @@ export default function CharacterDetailPage() {
                     }
                   />
                 </div>
-                <div className="field">
-                  <label htmlFor="character-edit-player-notes">Joueur / contraintes</label>
-                  <textarea
-                    id="character-edit-player-notes"
-                    value={playerNotes}
-                    onChange={(e) => setPlayerNotes(e.target.value)}
-                    placeholder="Allergies, phobies, limites de jeu, besoins particuliers..."
-                  />
-                </div>
+                {canViewPlayerInfo ? (
+                  <div className="field">
+                    <label htmlFor="character-edit-player-notes">Joueur / contraintes</label>
+                    <textarea
+                      id="character-edit-player-notes"
+                      value={playerNotes}
+                      onChange={(e) => setPlayerNotes(e.target.value)}
+                      placeholder="Allergies, phobies, limites de jeu, besoins particuliers..."
+                    />
+                  </div>
+                ) : null}
                 <div className="field">
                   <label htmlFor="character-edit-background">Background</label>
                   <div className="editor-toolbar note-toolbar">
@@ -249,10 +253,12 @@ export default function CharacterDetailPage() {
         </div>
 
         <div className="surface-grid">
-          <div className="detail-block span-12">
-            <h3>Joueur / contraintes</h3>
-            <p>{currentCharacter.playerNotes?.trim() || "Aucune information joueur renseignee pour le moment."}</p>
-          </div>
+          {canViewPlayerInfo ? (
+            <div className="detail-block span-12">
+              <h3>Joueur / contraintes</h3>
+              <p>{currentCharacter.playerNotes?.trim() || "Aucune information joueur renseignee pour le moment."}</p>
+            </div>
+          ) : null}
 
           <div className="detail-block span-6">
             <h3>Objectifs</h3>
