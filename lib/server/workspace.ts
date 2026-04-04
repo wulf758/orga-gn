@@ -5,12 +5,14 @@ import {
   archiveWorkspace,
   createSession,
   createWorkspace,
+  deleteManagedAccount,
   deleteGameMembership,
   getProfileById,
   getGameMembership,
   deleteWorkspace,
   deleteSession,
   listGameMemberships,
+  listManagedAccounts,
   listProfiles,
   listUserMemberships,
   getSession,
@@ -894,4 +896,81 @@ export async function removeWorkspaceMemberForGameId(input: {
   }
 
   return { ok: true as const, removedMembershipId: targetMembership.id };
+}
+
+export async function listAccountsForSuperAdmin(input: {
+  user?: AuthenticatedUser | null;
+}) {
+  const admin = requireSuperAdmin(input.user);
+
+  if (!admin.ok) {
+    return admin;
+  }
+
+  const accounts = await listManagedAccounts();
+
+  return {
+    ok: true as const,
+    accounts: accounts.map((account) => ({
+      ...account,
+      isSuperAdmin: isSuperAdminUser({
+        id: account.id,
+        email: account.email ?? null,
+        displayName: account.displayName ?? null
+      })
+    }))
+  };
+}
+
+export async function deleteAccountForSuperAdmin(input: {
+  user?: AuthenticatedUser | null;
+  targetUserId: string;
+}) {
+  const admin = requireSuperAdmin(input.user);
+
+  if (!admin.ok) {
+    return admin;
+  }
+
+  if (!input.targetUserId.trim()) {
+    return { ok: false as const, error: "Compte cible introuvable." };
+  }
+
+  if (input.user?.id === input.targetUserId) {
+    return {
+      ok: false as const,
+      error: "Ton propre compte super-admin ne peut pas etre supprime ici."
+    };
+  }
+
+  const accounts = await listManagedAccounts();
+  const target = accounts.find((account) => account.id === input.targetUserId);
+
+  if (!target) {
+    return { ok: false as const, error: "Compte introuvable." };
+  }
+
+  if (
+    isSuperAdminUser({
+      id: target.id,
+      email: target.email ?? null,
+      displayName: target.displayName ?? null
+    })
+  ) {
+    return {
+      ok: false as const,
+      error: "Les comptes super-admin ne peuvent pas etre supprimes depuis ce panneau."
+    };
+  }
+
+  const deleted = await deleteManagedAccount(target.id);
+
+  if (!deleted) {
+    return { ok: false as const, error: "Suppression du compte impossible." };
+  }
+
+  return {
+    ok: true as const,
+    deletedUserId: target.id
+  };
 }

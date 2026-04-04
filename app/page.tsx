@@ -6,7 +6,21 @@ import Link from "next/link";
 import { useAppData } from "@/components/app-data-provider";
 import { CreatePanel } from "@/components/create-panel";
 import { PageHero } from "@/components/page-hero";
+import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { ManagedAccount } from "@/lib/types";
 import { buildDeleteConfirmation } from "@/lib/ui-copy";
+
+async function getAuthHeaders() {
+  const supabase = getSupabaseBrowserClient();
+  const session = supabase ? (await supabase.auth.getSession()).data.session : null;
+  const headers = new Headers();
+
+  if (session?.access_token) {
+    headers.set("Authorization", `Bearer ${session.access_token}`);
+  }
+
+  return headers;
+}
 
 export default function HomePage() {
   const {
@@ -47,6 +61,10 @@ export default function HomePage() {
   const [isCreating, setIsCreating] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [isDeletingPermanently, setIsDeletingPermanently] = useState(false);
+  const [accounts, setAccounts] = useState<ManagedAccount[]>([]);
+  const [accountsError, setAccountsError] = useState("");
+  const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
+  const [deletingAccountId, setDeletingAccountId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!games.length) {
@@ -90,6 +108,44 @@ export default function HomePage() {
       setArchiveSuccess("");
     }
   }, [selectedGameId]);
+
+  useEffect(() => {
+    async function loadAccounts() {
+      if (!isSuperAdmin || !isAuthenticated) {
+        setAccounts([]);
+        setAccountsError("");
+        setIsLoadingAccounts(false);
+        return;
+      }
+
+      setIsLoadingAccounts(true);
+
+      try {
+        const response = await fetch("/api/admin/accounts", {
+          cache: "no-store",
+          headers: await getAuthHeaders()
+        });
+
+        if (!response.ok) {
+          const payload = (await response.json().catch(() => ({}))) as { error?: string };
+          setAccountsError(payload.error ?? "Chargement des comptes impossible.");
+          setAccounts([]);
+          return;
+        }
+
+        const payload = (await response.json()) as { accounts?: ManagedAccount[] };
+        setAccounts(payload.accounts ?? []);
+        setAccountsError("");
+      } catch {
+        setAccountsError("Chargement des comptes impossible.");
+        setAccounts([]);
+      } finally {
+        setIsLoadingAccounts(false);
+      }
+    }
+
+    void loadAccounts();
+  }, [isAuthenticated, isSuperAdmin]);
 
   async function handleOpenGameById(gameId: string) {
     const targetGame = games.find((game) => game.id === gameId);
@@ -227,6 +283,39 @@ export default function HomePage() {
     if (role === "orga") return "orga";
     if (role === "lecture") return "lecture";
     return null;
+  }
+
+  async function handleDeleteAccount(account: ManagedAccount) {
+    const label = account.displayName || account.email || account.id;
+    const confirmed = window.confirm(
+      buildDeleteConfirmation({
+        entityLabel: "le compte orga",
+        name: label
+      })
+    );
+
+    if (!confirmed) return;
+
+    setDeletingAccountId(account.id);
+    setAccountsError("");
+
+    try {
+      const response = await fetch(`/api/admin/accounts/${account.id}`, {
+        method: "DELETE",
+        headers: await getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => ({}))) as { error?: string };
+        setAccountsError(payload.error ?? "Suppression du compte impossible.");
+        return;
+      }
+
+      setAccounts((current) => current.filter((item) => item.id !== account.id));
+      setArchiveSuccess(`Le compte "${label}" a ete supprime.`);
+    } finally {
+      setDeletingAccountId(null);
+    }
   }
 
   return (
@@ -618,6 +707,69 @@ export default function HomePage() {
                 </div>
               ) : (
                 <div className="empty-state">Aucun GN archive pour le moment.</div>
+              )}
+            </div>
+          ) : null}
+
+          {isSuperAdmin ? (
+            <div className="archive-section">
+              <div className="section-header">
+                <div>
+                  <p className="section-kicker">Comptes orga</p>
+                  <h3 className="section-title section-title-small">Annuaire super-admin</h3>
+                  <p className="section-copy">
+                    Cette vue permet de retirer completement un compte test ou un compte orga
+                    obsolete.
+                  </p>
+                </div>
+              </div>
+              {accountsError ? <div className="form-error">{accountsError}</div> : null}
+              {isLoadingAccounts ? (
+                <div className="empty-state">Chargement des comptes...</div>
+              ) : accounts.length ? (
+                <div className="list-stack">
+                  {accounts.map((account) => {
+                    const label = account.displayName || account.email || account.id;
+                    const isOwnAccount = authUser?.id === account.id;
+
+                    return (
+                      <article key={account.id} className="workspace-card">
+                        <div className="workspace-card-header">
+                          <h3>{label}</h3>
+                          <div className="badge-row">
+                            {account.isSuperAdmin ? (
+                              <span className="status-pill">super-admin</span>
+                            ) : null}
+                            {isOwnAccount ? <span className="status-pill success">toi</span> : null}
+                          </div>
+                        </div>
+                        <p>{account.email ?? "Email indisponible dans l'annuaire."}</p>
+                        <p>
+                          {account.activeGameCount} GN actifs, {account.archivedGameCount} GN
+                          archives, {account.gameCount} acces au total.
+                        </p>
+                        <div className="form-actions">
+                          <button
+                            type="button"
+                            className="button-danger"
+                            disabled={
+                              deletingAccountId === account.id || isOwnAccount || account.isSuperAdmin
+                            }
+                            onClick={() => {
+                              void handleDeleteAccount(account);
+                            }}
+                          >
+                            {deletingAccountId === account.id
+                              ? "Suppression..."
+                              : "Supprimer le compte"}
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="empty-state">Aucun autre compte orga pour le moment.</div>
               )}
             </div>
           ) : null}

@@ -5,6 +5,7 @@ import { getEmptyAppData } from "@/lib/data";
 import {
   AppData,
   GameMembership,
+  ManagedAccount,
   MembershipRole,
   UserProfile,
   WorkspaceSummary
@@ -334,6 +335,36 @@ async function supabaseFetch(path: string, init: RequestInit = {}) {
   if (!response.ok) {
     const detail = await response.text();
     throw new Error(`Supabase ${response.status}: ${detail}`);
+  }
+
+  return response;
+}
+
+async function supabaseAuthAdminFetch(path: string, init: RequestInit = {}) {
+  const config = getSupabaseConfig();
+
+  if (!config) {
+    throw new Error("Supabase n'est pas configure.");
+  }
+
+  const headers = new Headers(init.headers);
+  headers.set("apikey", config.key);
+  headers.set("Authorization", `Bearer ${config.key}`);
+  headers.set("Accept", "application/json");
+
+  if (init.body && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  const response = await fetch(`${config.url}/auth/v1/admin/${path}`, {
+    ...init,
+    headers,
+    cache: "no-store"
+  });
+
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(`Supabase auth ${response.status}: ${detail}`);
   }
 
   return response;
@@ -748,6 +779,12 @@ function sqliteUpsertGameMembership(input: {
 function sqliteDeleteGameMembership(id: string) {
   const database = getSqliteDatabase();
   const result = database.prepare("DELETE FROM game_memberships WHERE id = ?").run(id);
+  return result.changes > 0;
+}
+
+function sqliteDeleteProfile(id: string) {
+  const database = getSqliteDatabase();
+  const result = database.prepare("DELETE FROM profiles WHERE id = ?").run(id);
   return result.changes > 0;
 }
 
@@ -1231,6 +1268,64 @@ export async function deleteGameMembership(id: string) {
 
   const query = buildQuery({ id: `eq.${id}` });
   await supabaseFetch(`game_memberships?${query}`, { method: "DELETE" });
+  return true;
+}
+
+export async function listManagedAccounts() {
+  const [profiles, games] = await Promise.all([listProfiles(), listWorkspaces()]);
+  const accounts = await Promise.all(
+    profiles.map(async (profile) => {
+      const memberships = await listUserMemberships(profile.id);
+      const relatedGames = games.filter((game) =>
+        memberships.some((membership) => membership.gameId === game.id)
+      );
+
+      return {
+        id: profile.id,
+        displayName: profile.displayName ?? null,
+        email: null,
+        createdAt: profile.createdAt,
+        updatedAt: profile.updatedAt,
+        isSuperAdmin: false,
+        gameCount: memberships.length,
+        activeGameCount: relatedGames.filter((game) => !game.archived_at).length,
+        archivedGameCount: relatedGames.filter((game) => Boolean(game.archived_at)).length
+      } satisfies ManagedAccount;
+    })
+  );
+
+  if (!isSupabaseEnabled()) {
+    return accounts;
+  }
+
+  const response = await supabaseAuthAdminFetch("users?page=1&per_page=1000");
+  const payload = (await response.json()) as {
+    users?: Array<{
+      id?: string;
+      email?: string | null;
+    }>;
+  };
+  const emailMap = new Map(
+    (payload.users ?? [])
+      .filter((user) => typeof user.id === "string")
+      .map((user) => [String(user.id), user.email ?? null] as const)
+  );
+
+  return accounts.map((account) => ({
+    ...account,
+    email: emailMap.get(account.id) ?? null
+  }));
+}
+
+export async function deleteManagedAccount(userId: string) {
+  if (!isSupabaseEnabled()) {
+    return sqliteDeleteProfile(userId);
+  }
+
+  await supabaseAuthAdminFetch(`users/${userId}`, {
+    method: "DELETE"
+  });
+
   return true;
 }
 

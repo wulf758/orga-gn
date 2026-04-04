@@ -216,4 +216,16 @@ export type GameMembership = {
   updatedAt: string;
 };
 
+export type ManagedAccount = {
+  id: string;
+  displayName?: string | null;
+  email?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  isSuperAdmin: boolean;
+  gameCount: number;
+  activeGameCount: number;
+  archivedGameCount: number;
+};
+
 export type WorkspaceAccessMode = "legacy-password" | "membership";
