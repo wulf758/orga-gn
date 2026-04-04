@@ -594,26 +594,7 @@ export default function HomePage() {
           ) : null}
         </div>
 
-        <div className="surface span-12">
-          <div className="section-header">
-            <div>
-              <p className="section-kicker">Navigation</p>
-              <h2 className="section-title">Ouverture rapide</h2>
-              <p className="section-copy">
-                Chaque carte GN propose maintenant directement ses actions principales pour eviter
-                un panneau d'explication trop long.
-              </p>
-            </div>
-          </div>
-          {archiveError ? <div className="form-error">{archiveError}</div> : null}
-          <div className="detail-block">
-            <h3>Repere rapide</h3>
-            <p>
-              Acceder a l'espace ouvre directement le GN. Gestion apparait seulement pour les
-              admins du GN et regroupe le renommage, les membres et l'archivage.
-            </p>
-          </div>
-        </div>
+        {archiveError ? <div className="surface span-12 form-error">{archiveError}</div> : null}
       </section>
     </>
   );
