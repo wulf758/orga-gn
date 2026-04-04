@@ -34,12 +34,10 @@ import {
   ADMIN_SESSION_DURATION_SECONDS,
   createSessionToken,
   getAdminPassword,
-  getInvitationPassword,
   hashPassword,
   hashSessionToken,
   SESSION_COOKIE_NAME,
   SESSION_DURATION_SECONDS,
-  verifyPassword
 } from "@/lib/server/auth";
 import { canWriteWorkspace } from "@/lib/server/supabase-auth";
 
@@ -165,7 +163,10 @@ export async function listWorkspaceOverview() {
 
 export async function listWorkspaceOverviewForUser(userId?: string | null) {
   if (!userId) {
-    return listWorkspaceOverview();
+    return {
+      games: [],
+      currentGame: null
+    };
   }
 
   const [current, memberships, games] = await Promise.all([
@@ -219,9 +220,7 @@ export async function openAdminSessionWithPassword(password: string) {
 }
 
 export async function createWorkspaceWithAccess(input: {
-  invitePassword: string;
   name: string;
-  accessPassword: string;
   creator?: {
     id: string;
     email?: string | null;
@@ -230,19 +229,14 @@ export async function createWorkspaceWithAccess(input: {
 }) {
   const creator = input.creator ?? null;
 
-  if (!creator && input.invitePassword !== getInvitationPassword()) {
-    return { ok: false as const, error: "Mot de passe d'invitation incorrect." };
+  if (!creator) {
+    return { ok: false as const, error: "Connexion utilisateur requise pour creer un GN." };
   }
 
   const name = input.name.trim();
-  const accessPassword = input.accessPassword.trim();
 
   if (!name) {
     return { ok: false as const, error: "Le nom du GN est requis." };
-  }
-
-  if (!accessPassword) {
-    return { ok: false as const, error: "Le mot de passe d'acces est requis." };
   }
 
   if (await workspaceNameExists(name)) {
@@ -253,7 +247,7 @@ export async function createWorkspaceWithAccess(input: {
   const workspace = await createWorkspace({
     id: workspaceId,
     name,
-    passwordHash: hashPassword(accessPassword)
+    passwordHash: hashPassword(createSessionToken())
   });
 
   if (!workspace) {
@@ -295,7 +289,6 @@ export async function createWorkspaceWithAccess(input: {
 
 export async function openWorkspaceWithPassword(input: {
   id: string;
-  accessPassword: string;
   userId?: string | null;
 }) {
   const workspace = await getWorkspaceById(input.id);
@@ -308,14 +301,10 @@ export async function openWorkspaceWithPassword(input: {
     return { ok: false as const, error: "Ce GN est archive et n'est pas accessible." };
   }
 
-  const membership = input.userId
-    ? await getGameMembership(workspace.id, input.userId)
-    : null;
+  const membership = input.userId ? await getGameMembership(workspace.id, input.userId) : null;
 
-  const accessPassword = input.accessPassword.trim();
-
-  if (!membership && !verifyPassword(accessPassword, workspace.password_hash)) {
-    return { ok: false as const, error: "Mot de passe incorrect." };
+  if (!membership) {
+    return { ok: false as const, error: "Ce GN n'est pas accessible avec ton compte." };
   }
 
   const token = createSessionToken();
@@ -492,8 +481,8 @@ export async function resetWorkspaceAccessPassword(input: {
 
 export async function archiveWorkspaceWithConfirmation(input: {
   id: string;
-  accessPassword: string;
   confirmName: string;
+  userId?: string | null;
 }) {
   const workspace = await getWorkspaceById(input.id);
 
@@ -501,14 +490,17 @@ export async function archiveWorkspaceWithConfirmation(input: {
     return { ok: false as const, error: "GN introuvable." };
   }
 
-  const accessPassword = input.accessPassword.trim();
-
-  if (!accessPassword) {
-    return { ok: false as const, error: "Le mot de passe d'acces est requis." };
+  if (!input.userId) {
+    return { ok: false as const, error: "Connexion utilisateur requise." };
   }
 
-  if (!verifyPassword(accessPassword, workspace.password_hash)) {
-    return { ok: false as const, error: "Mot de passe d'acces incorrect." };
+  const membership = await getGameMembership(workspace.id, input.userId);
+
+  if (!membership || membership.role !== "admin") {
+    return {
+      ok: false as const,
+      error: "Seuls les admins du GN peuvent archiver cet espace."
+    };
   }
 
   if (input.confirmName.trim() !== workspace.name) {

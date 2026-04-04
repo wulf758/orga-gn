@@ -24,7 +24,6 @@ export default function HomePage() {
     isReady,
     openAdminSession,
     openGame,
-    resetGamePassword,
     restoreGame,
     signInWithPassword,
     signOutUser,
@@ -34,13 +33,9 @@ export default function HomePage() {
   const archivedGames = useMemo(() => games.filter((game) => game.archived), [games]);
 
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
-  const [accessPassword, setAccessPassword] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
-  const [archiveAccessPassword, setArchiveAccessPassword] = useState("");
   const [archiveConfirmName, setArchiveConfirmName] = useState("");
-  const [invitePassword, setInvitePassword] = useState("");
   const [newGameName, setNewGameName] = useState("");
-  const [newGamePassword, setNewGamePassword] = useState("");
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
   const [authDisplayName, setAuthDisplayName] = useState("");
@@ -48,8 +43,6 @@ export default function HomePage() {
   const [authSuccess, setAuthSuccess] = useState("");
   const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [isSubmittingAuth, setIsSubmittingAuth] = useState(false);
-  const [resetPasswordValue, setResetPasswordValue] = useState("");
-  const [accessError, setAccessError] = useState("");
   const [adminError, setAdminError] = useState("");
   const [createError, setCreateError] = useState("");
   const [archiveError, setArchiveError] = useState("");
@@ -59,7 +52,6 @@ export default function HomePage() {
   const [isOpeningAdmin, setIsOpeningAdmin] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
-  const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [isDeletingPermanently, setIsDeletingPermanently] = useState(false);
 
@@ -83,33 +75,24 @@ export default function HomePage() {
   }, [activeGames, archivedGames, games, selectedGameId]);
 
   useEffect(() => {
-    setAccessError("");
     setArchiveError("");
     setArchiveSuccess("");
-    setArchiveAccessPassword("");
     setArchiveConfirmName("");
     setAdminError("");
     setAdminSuccess("");
-    setResetPasswordValue("");
   }, [selectedGameId]);
-
-  useEffect(() => {
-    if (accessError) {
-      setAccessError("");
-    }
-  }, [accessPassword]);
 
   useEffect(() => {
     if (adminError) {
       setAdminError("");
     }
-  }, [adminPassword, resetPasswordValue]);
+  }, [adminPassword]);
 
   useEffect(() => {
     if (createError) {
       setCreateError("");
     }
-  }, [invitePassword, newGameName, newGamePassword]);
+  }, [newGameName]);
 
   useEffect(() => {
     if (authError) {
@@ -127,19 +110,19 @@ export default function HomePage() {
     if (archiveError) {
       setArchiveError("");
     }
-  }, [archiveAccessPassword, archiveConfirmName]);
+  }, [archiveConfirmName]);
 
   useEffect(() => {
     if (archiveSuccess) {
       setArchiveSuccess("");
     }
-  }, [archiveAccessPassword, archiveConfirmName, accessPassword, selectedGameId]);
+  }, [archiveConfirmName, selectedGameId]);
 
   useEffect(() => {
     if (adminSuccess) {
       setAdminSuccess("");
     }
-  }, [adminPassword, resetPasswordValue, selectedGameId]);
+  }, [adminPassword, selectedGameId]);
 
   async function handleOpenGame(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -147,18 +130,16 @@ export default function HomePage() {
     setIsOpening(true);
 
     const result = await openGame({
-      id: selectedGame.id,
-      accessPassword
+      id: selectedGame.id
     });
 
     if (!result.ok) {
-      setAccessError(result.error ?? "Acces refuse.");
+      setArchiveError(result.error ?? "Acces refuse.");
       setIsOpening(false);
       return;
     }
 
-    setAccessError("");
-    setAccessPassword("");
+    setArchiveError("");
     window.location.assign("/dashboard");
   }
 
@@ -168,9 +149,7 @@ export default function HomePage() {
     setIsCreating(true);
 
     const result = await createGame({
-      invitePassword,
-      name: newGameName,
-      accessPassword: newGamePassword
+      name: newGameName
     });
 
     if (!result.ok) {
@@ -180,9 +159,7 @@ export default function HomePage() {
     }
 
     setCreateError("");
-    setInvitePassword("");
     setNewGameName("");
-    setNewGamePassword("");
     window.location.assign("/dashboard");
   }
 
@@ -233,7 +210,6 @@ export default function HomePage() {
 
     const result = await archiveGame({
       id: selectedGame.id,
-      accessPassword: archiveAccessPassword,
       confirmName: archiveConfirmName
     });
 
@@ -243,11 +219,9 @@ export default function HomePage() {
       return;
     }
 
-    setArchiveAccessPassword("");
     setArchiveConfirmName("");
     setArchiveError("");
     setArchiveSuccess(`Le GN "${selectedGame.name}" a ete archive.`);
-    setAccessPassword("");
     setIsArchiving(false);
   }
 
@@ -269,29 +243,6 @@ export default function HomePage() {
     setAdminError("");
     setAdminSuccess("Administration des GN ouverte.");
     setIsOpeningAdmin(false);
-  }
-
-  async function handleResetPassword(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!selectedGame || isResettingPassword) return;
-
-    setIsResettingPassword(true);
-
-    const result = await resetGamePassword({
-      id: selectedGame.id,
-      nextAccessPassword: resetPasswordValue
-    });
-
-    if (!result.ok) {
-      setAdminError(result.error ?? "Reinitialisation impossible.");
-      setIsResettingPassword(false);
-      return;
-    }
-
-    setResetPasswordValue("");
-    setAdminError("");
-    setAdminSuccess(`Le mot de passe du GN "${selectedGame.name}" a ete reinitialise.`);
-    setIsResettingPassword(false);
   }
 
   async function handleRestoreGame() {
@@ -342,7 +293,6 @@ export default function HomePage() {
     setAdminPassword("");
     setAdminError("");
     setAdminSuccess("");
-    setResetPasswordValue("");
   }
 
   function handleResumeCurrentGame() {
@@ -353,15 +303,15 @@ export default function HomePage() {
     <>
       <PageHero
         kicker="Accueil multi-GN"
-        title="Choisir un GN en developpement ou en ouvrir un nouveau."
-        copy="Chaque GN dispose de son espace de travail separe, avec le meme schema d'organisation, ses notes, ses personnages, ses intrigues et son pilotage."
+        title="Se connecter, creer un GN, puis ouvrir ses espaces."
+        copy="Chaque GN dispose de son espace de travail separe. Les acces passent maintenant par les comptes orga et les roles definis dans l'equipe."
         actions={
           hasCurrentGame && currentGame ? (
             <button type="button" className="button-primary" onClick={handleResumeCurrentGame}>
               Reprendre {currentGame.name}
             </button>
           ) : (
-            <span className="hero-note hero-note-accent">Creation protegee</span>
+            <span className="hero-note hero-note-accent">Mode compte orga</span>
           )
         }
         aside={
@@ -470,22 +420,10 @@ export default function HomePage() {
               description={
                 isAuthenticated
                   ? "Ce GN sera cree sous ton compte, et tu deviendras automatiquement admin de cet espace."
-                  : "La creation est reservee aux personnes disposant du mot de passe d'invitation, puis chaque GN recoit son mot de passe d'acces propre."
+                  : "Connecte-toi d'abord avec un compte orga pour creer ton premier GN."
               }
             >
               <form className="form-stack" onSubmit={handleCreateGame}>
-                {!isAuthenticated ? (
-                  <div className="field">
-                    <label htmlFor="invite-password">Mot de passe d'invitation</label>
-                    <input
-                      id="invite-password"
-                      type="password"
-                      value={invitePassword}
-                      onChange={(event) => setInvitePassword(event.target.value)}
-                      disabled={isCreating}
-                    />
-                  </div>
-                ) : null}
                 <div className="field">
                   <label htmlFor="new-game-name">Nom du GN</label>
                   <input
@@ -496,28 +434,12 @@ export default function HomePage() {
                     disabled={isCreating}
                   />
                 </div>
-                <div className="field">
-                  <label htmlFor="new-game-password">Mot de passe d'acces</label>
-                  <input
-                    id="new-game-password"
-                    type="password"
-                    value={newGamePassword}
-                    onChange={(event) => setNewGamePassword(event.target.value)}
-                    placeholder="Mot de passe de cet espace"
-                    disabled={isCreating}
-                  />
-                </div>
                 {createError ? <div className="form-error">{createError}</div> : null}
                 <div className="form-actions">
                   <button
                     type="submit"
                     className="button-primary"
-                    disabled={
-                      isCreating ||
-                      !newGameName.trim() ||
-                      !newGamePassword.trim() ||
-                      (!isAuthenticated && !invitePassword.trim())
-                    }
+                    disabled={isCreating || !newGameName.trim() || !isAuthenticated}
                   >
                     {isCreating ? "Creation..." : "Creer cet espace"}
                   </button>
@@ -527,7 +449,7 @@ export default function HomePage() {
 
             <CreatePanel
               title="Administration des GN"
-              description="Cet acces reserve permet de restaurer un GN archive, de le supprimer definitivement et de reinitialiser ses mots de passe."
+              description="Cet acces reserve permet de restaurer un GN archive ou de le supprimer definitivement en secours."
             >
               {isAdminSession ? (
                 <div className="form-stack">
@@ -610,7 +532,7 @@ export default function HomePage() {
               <p className="section-copy">
                 {isAuthenticated
                   ? "Les espaces affiches ici correspondent aux GN auxquels ton compte a acces."
-                  : "Chaque carte ouvre vers un espace de travail protege par mot de passe."}
+                  : "Connecte-toi pour voir et ouvrir les GN auxquels ton compte appartient."}
               </p>
             </div>
           </div>
@@ -623,8 +545,7 @@ export default function HomePage() {
                   className={`workspace-card${selectedGameId === game.id ? " active" : ""}`}
                   onClick={() => {
                     setSelectedGameId(game.id);
-                    setAccessPassword("");
-                    setAccessError("");
+                    setArchiveError("");
                   }}
                 >
                   <div className="workspace-card-header">
@@ -640,8 +561,9 @@ export default function HomePage() {
             </div>
           ) : isReady ? (
             <div className="empty-state">
-              Aucun GN actif pour le moment. La creation d'un premier espace est
-              disponible a droite.
+              {isAuthenticated
+                ? "Aucun GN actif pour le moment. Cree ton premier espace ou demande a etre ajoute a un GN existant."
+                : "Connecte-toi pour voir les GN auxquels ton compte a acces."}
             </div>
           ) : (
             <div className="empty-state">Initialisation des espaces GN...</div>
@@ -713,36 +635,16 @@ export default function HomePage() {
                       <h3>{selectedGame.name}</h3>
                       <p>
                         {isAuthenticated
-                          ? "Ton compte peut ouvrir directement ce GN. Tu peux aussi continuer a renseigner le mot de passe partage si besoin."
-                          : "Entrer le mot de passe d'acces de ce GN pour ouvrir son espace de travail."}
+                          ? "Ce GN est rattache a ton compte. Tu peux l'ouvrir directement."
+                          : "Connecte-toi avec un compte orga membre de ce GN pour l'ouvrir."}
                       </p>
                     </div>
-                    {!isAuthenticated ? (
-                      <div className="field">
-                        <label htmlFor="access-password">Mot de passe d'acces</label>
-                        <input
-                          id="access-password"
-                          type="password"
-                          value={accessPassword}
-                          onChange={(event) => setAccessPassword(event.target.value)}
-                          disabled={isOpening}
-                        />
-                      </div>
-                    ) : null}
-                    {isAuthenticated ? (
-                      <div className="detail-block">
-                        <p>
-                          Ouverture via ton compte orga. Le mot de passe du GN reste disponible
-                          pour les personnes qui ne sont pas encore membres.
-                        </p>
-                      </div>
-                    ) : null}
-                    {accessError ? <div className="form-error">{accessError}</div> : null}
+                    {archiveError ? <div className="form-error">{archiveError}</div> : null}
                     <div className="form-actions">
                       <button
                         type="submit"
                         className="button-primary"
-                        disabled={isOpening || (!isAuthenticated && !accessPassword.trim())}
+                        disabled={isOpening || !isAuthenticated}
                       >
                         {isOpening ? "Ouverture..." : "Ouvrir l'espace"}
                       </button>
@@ -753,19 +655,10 @@ export default function HomePage() {
                     <div className="detail-block danger-block">
                       <h3>Archiver ce GN</h3>
                       <p>
-                        Cette action retire le GN des espaces actifs. Pour confirmer,
-                        recopier exactement son nom : <strong>{selectedGame.name}</strong>
+                        Cette action retire le GN des espaces actifs. Seul un admin du GN peut le
+                        faire. Pour confirmer, recopier exactement son nom :{" "}
+                        <strong>{selectedGame.name}</strong>
                       </p>
-                    </div>
-                    <div className="field">
-                      <label htmlFor="archive-access-password">Mot de passe d'acces du GN</label>
-                      <input
-                        id="archive-access-password"
-                        type="password"
-                        value={archiveAccessPassword}
-                        onChange={(event) => setArchiveAccessPassword(event.target.value)}
-                        disabled={isArchiving}
-                      />
                     </div>
                     <div className="field">
                       <label htmlFor="archive-game-name">Nom du GN a retaper</label>
@@ -782,11 +675,7 @@ export default function HomePage() {
                       <button
                         type="submit"
                         className="button-danger"
-                        disabled={
-                          isArchiving ||
-                          !archiveAccessPassword.trim() ||
-                          archiveConfirmName.trim() !== selectedGame.name
-                        }
+                        disabled={isArchiving || archiveConfirmName.trim() !== selectedGame.name}
                       >
                         {isArchiving ? "Archivage..." : "Archiver le GN"}
                       </button>
@@ -834,45 +723,10 @@ export default function HomePage() {
                   )}
                 </div>
               )}
-
-              {isAdminSession ? (
-                <form className="form-stack admin-stack" onSubmit={handleResetPassword}>
-                  <div className="detail-block admin-block">
-                    <h3>Reinitialiser le mot de passe</h3>
-                    <p>
-                      Definir un nouveau mot de passe d&apos;acces pour{" "}
-                      <strong>{selectedGame.name}</strong>.
-                    </p>
-                  </div>
-                  <div className="field">
-                    <label htmlFor="reset-password-value">Nouveau mot de passe d'acces</label>
-                    <input
-                      id="reset-password-value"
-                      type="password"
-                      value={resetPasswordValue}
-                      onChange={(event) => setResetPasswordValue(event.target.value)}
-                      disabled={isResettingPassword}
-                    />
-                  </div>
-                  {adminError ? <div className="form-error">{adminError}</div> : null}
-                  {adminSuccess ? <div className="form-success">{adminSuccess}</div> : null}
-                  <div className="form-actions">
-                    <button
-                      type="submit"
-                      className="button-primary"
-                      disabled={isResettingPassword || !resetPasswordValue.trim()}
-                    >
-                      {isResettingPassword
-                        ? "Reinitialisation..."
-                        : "Reinitialiser le mot de passe"}
-                    </button>
-                  </div>
-                </form>
-              ) : null}
             </div>
           ) : (
             <div className="empty-state">
-              Selectionner un GN dans la liste pour saisir son mot de passe d'acces.
+              Selectionner un GN dans la liste pour l'ouvrir avec ton compte orga.
             </div>
           )}
         </div>

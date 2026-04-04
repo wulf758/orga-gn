@@ -27,15 +27,11 @@ export async function POST(request: Request) {
       getBearerTokenFromRequest(request)
     );
     const body = (await request.json()) as {
-      invitePassword?: string;
       name?: string;
-      accessPassword?: string;
     };
 
     const result = await createWorkspaceWithAccess({
-      invitePassword: body.invitePassword ?? "",
       name: body.name ?? "",
-      accessPassword: body.accessPassword ?? "",
       creator: currentUser
     });
 

@@ -77,19 +77,15 @@ type WorkspaceAccessState = {
 };
 
 type CreateGameInput = {
-  invitePassword: string;
   name: string;
-  accessPassword: string;
 };
 
 type OpenGameInput = {
   id: string;
-  accessPassword: string;
 };
 
 type DeleteGameInput = {
   id: string;
-  accessPassword: string;
   confirmName: string;
 };
 
@@ -1142,16 +1138,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       },
       async archiveGame(input) {
         try {
-          const response = await fetch(`/api/games/${input.id}`, {
-            method: "DELETE",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              accessPassword: input.accessPassword,
-              confirmName: input.confirmName
-            })
-          });
+            const response = await fetch(`/api/games/${input.id}`, {
+              method: "DELETE",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                confirmName: input.confirmName
+              })
+            });
 
           if (!response.ok) {
             return {

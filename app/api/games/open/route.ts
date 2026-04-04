@@ -16,12 +16,10 @@ export async function POST(request: Request) {
   );
   const body = (await request.json()) as {
     id?: string;
-    accessPassword?: string;
   };
 
   const result = await openWorkspaceWithPassword({
     id: body.id ?? "",
-    accessPassword: body.accessPassword ?? "",
     userId: currentUser?.id ?? null
   });
 

@@ -5,6 +5,10 @@ import {
   archiveWorkspaceWithConfirmation,
   getCurrentWorkspaceContext
 } from "@/lib/server/workspace";
+import {
+  getAuthenticatedUserFromAccessToken,
+  getBearerTokenFromRequest
+} from "@/lib/server/supabase-auth";
 import { SESSION_COOKIE_NAME } from "@/lib/server/auth";
 
 type RouteContext = {
@@ -14,9 +18,11 @@ type RouteContext = {
 };
 
 export async function DELETE(request: Request, context: RouteContext) {
+  const currentUser = await getAuthenticatedUserFromAccessToken(
+    getBearerTokenFromRequest(request)
+  );
   const { id } = await context.params;
   const body = (await request.json()) as {
-    accessPassword?: string;
     confirmName?: string;
   };
 
@@ -24,8 +30,8 @@ export async function DELETE(request: Request, context: RouteContext) {
   const isArchivingCurrentWorkspace = current?.workspace.id === id;
   const result = await archiveWorkspaceWithConfirmation({
     id,
-    accessPassword: body.accessPassword ?? "",
-    confirmName: body.confirmName ?? ""
+    confirmName: body.confirmName ?? "",
+    userId: currentUser?.id ?? null
   });
 
   if (!result.ok) {
