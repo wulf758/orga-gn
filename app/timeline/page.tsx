@@ -9,6 +9,10 @@ import { PageHero } from "@/components/page-hero";
 import { TagBadge } from "@/components/tag-badge";
 import { TagPicker } from "@/components/tag-picker";
 import { formatDateLabel } from "@/lib/date-utils";
+import {
+  buildTimelineDayDeletionWarning,
+  buildTimelineEntryDeletionWarning
+} from "@/lib/timeline-warnings";
 
 function buildQuarterSlots() {
   const slots: string[] = [];
@@ -170,21 +174,17 @@ export default function TimelinePage() {
 
   function handleDayDelete() {
     if (!selectedDay) return;
-
-    const linkedSceneCount = selectedDaySceneLinks.length;
-    const linkedEntryCount = selectedDayEntries.length;
-    const confirmationParts = [
-      `Supprimer "${selectedDay.label}" et ses ${linkedEntryCount} bloc(s) timeline ?`
-    ];
-
-    if (linkedSceneCount > 0) {
-      confirmationParts.push(
-        "",
-        `Attention : ${linkedSceneCount} scene(s) storyboard seront detachees de ce jour et de leurs liens timeline, mais ne seront pas supprimees.`
-      );
+    if (
+      !window.confirm(
+        buildTimelineDayDeletionWarning({
+          dayLabel: selectedDay.label,
+          entryCount: selectedDayEntries.length,
+          linkedScenes: selectedDaySceneLinks.map((scene) => ({ title: scene.title }))
+        })
+      )
+    ) {
+      return;
     }
-
-    if (!window.confirm(confirmationParts.join("\n"))) return;
     deleteTimelineDay(selectedDay.id);
     setSelectedDayId("");
     resetEntryForm();
@@ -219,16 +219,16 @@ export default function TimelinePage() {
 
   function handleEntryDelete(id: string, title: string) {
     const linkedScene = data.storyboardScenes.find((scene) => scene.timelineEntryId === id);
-    const confirmationParts = [`Supprimer le bloc "${title}" ?`];
-
-    if (linkedScene) {
-      confirmationParts.push(
-        "",
-        `Attention : la scene storyboard "${linkedScene.title}" sera detachee de ce bloc et sortie du jour associe, mais elle ne sera pas supprimee.`
-      );
+    if (
+      !window.confirm(
+        buildTimelineEntryDeletionWarning({
+          entryTitle: title,
+          linkedSceneTitle: linkedScene?.title
+        })
+      )
+    ) {
+      return;
     }
-
-    if (!window.confirm(confirmationParts.join("\n"))) return;
     deleteTimelineEntry(id);
     if (editingEntryId === id) {
       resetEntryForm();

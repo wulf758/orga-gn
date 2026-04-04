@@ -23,7 +23,7 @@ export function serializeDocumentContent(
 
       if (block.paragraphs.length) {
         lines.push("");
-        lines.push(...block.paragraphs);
+        lines.push(block.paragraphs.join("\n\n"));
       }
 
       if (block.bullets?.length) {
@@ -58,11 +58,16 @@ export function parseDocumentContent(text: string, fallbackHeading: string): Doc
   function pushCurrent() {
     flushParagraph();
     if (current.paragraphs.length || current.bullets?.length || current.heading.trim()) {
-      sections.push({
+      const nextSection: DocumentContentBlock = {
         heading: current.heading.trim() || fallbackHeading,
-        paragraphs: current.paragraphs,
-        bullets: current.bullets?.length ? current.bullets : undefined
-      });
+        paragraphs: current.paragraphs
+      };
+
+      if (current.bullets?.length) {
+        nextSection.bullets = current.bullets;
+      }
+
+      sections.push(nextSection);
     }
   }
 
