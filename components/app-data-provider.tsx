@@ -37,6 +37,11 @@ import {
   renameTagAcrossAppData
 } from "@/lib/tag-mutations";
 import {
+  createTagSectionList,
+  deleteTagSectionAcrossAppData,
+  updateTagSectionAcrossAppData
+} from "@/lib/tag-section-mutations";
+import {
   getMergedTagDefinitions,
   getMergedTagSections,
   isSystemTagLabel,
@@ -1313,17 +1318,18 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             return current;
           }
 
-          const nextSection = normalizeTagSectionDefinition({
-            id: `section-${slugify(nextLabel) || Date.now().toString()}`,
-            label: nextLabel,
-            color: input.color
-          });
+          const nextSections = createTagSectionList(current.tagSections, input);
+          const nextSection = nextSections.find(
+            (section) => normalizeTagSection(section.label) === nextLabel
+          );
+
+          if (!nextSection) {
+            return current;
+          }
 
           return {
             ...current,
-            tagSections: [...current.tagSections, nextSection].sort((left, right) =>
-              left.label.localeCompare(right.label)
-            ),
+            tagSections: nextSections,
             updates: [
               makeUpdate(
                 "Tags",
@@ -1357,29 +1363,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             return current;
           }
 
+          const nextData = updateTagSectionAcrossAppData(current, input);
+
           return {
-            ...current,
-            tagSections: current.tagSections
-              .map((section) =>
-                section.id === input.id
-                  ? normalizeTagSectionDefinition({
-                      ...section,
-                      label: nextLabel,
-                      color: input.color
-                    })
-                  : section
-              )
-              .sort((left, right) => left.label.localeCompare(right.label)),
-            tagsRegistry: current.tagsRegistry.map((definition) =>
-              normalizeTagSection(definition.section) === normalizeTagSection(target.label)
-                ? normalizeTagDefinition({
-                    ...definition,
-                    section: nextLabel,
-                    sectionColor: input.color,
-                    color: input.color
-                  })
-                : definition
-            ),
+            ...nextData,
             updates: [
               makeUpdate(
                 "Tags",
@@ -1420,9 +1407,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             };
           }
 
+          const result = deleteTagSectionAcrossAppData(current, id);
+
           return {
-            ...current,
-            tagSections: current.tagSections.filter((section) => section.id !== id),
+            ...result.data,
             updates: [
               makeUpdate(
                 "Tags",
