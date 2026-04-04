@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 
 import { useAppData } from "@/components/app-data-provider";
 import { PageHero } from "@/components/page-hero";
@@ -14,6 +15,8 @@ export default function CharactersPage() {
   const { data } = useAppData();
   const playerCharacters = data.characters.filter((character) => character.role === "PJ");
   const nonPlayerCharacters = data.characters.filter((character) => character.role === "PNJ");
+  const [isPlayerSectionOpen, setIsPlayerSectionOpen] = useState(false);
+  const [isNonPlayerSectionOpen, setIsNonPlayerSectionOpen] = useState(false);
 
   return (
     <>
@@ -46,68 +49,96 @@ export default function CharactersPage() {
       />
 
       <section className="surface-grid">
-        <div className="surface span-6">
+        <div className="surface span-12">
           <div className="section-header">
             <div>
               <p className="section-kicker">Repertoire</p>
               <h2 className="section-title">PJ</h2>
             </div>
+            <button
+              type="button"
+              className="button-secondary-light"
+              onClick={() => setIsPlayerSectionOpen((current) => !current)}
+              aria-expanded={isPlayerSectionOpen}
+            >
+              {isPlayerSectionOpen ? "Masquer les PJ" : "Ouvrir les PJ"}
+            </button>
           </div>
-          <div className="list-stack">
-            {playerCharacters.length ? (
-              playerCharacters.map((character) => (
-                <Link href={`/characters/${character.id}`} className="list-item" key={character.id}>
-                  <h3>{character.name}</h3>
-                  {character.tags.length ? (
-                    <div className="badge-row">
-                      {character.tags.map((tag) => (
-                        <TagBadge key={tag} tag={tag} definitions={data.tagsRegistry} />
-                      ))}
+          {isPlayerSectionOpen ? (
+            <div className="list-stack">
+              {playerCharacters.length ? (
+                playerCharacters.map((character) => (
+                  <Link href={`/characters/${character.id}`} className="list-item" key={character.id}>
+                    <h3>{character.name}</h3>
+                    {character.tags.length ? (
+                      <div className="badge-row">
+                        {character.tags.map((tag) => (
+                          <TagBadge key={tag} tag={tag} definitions={data.tagsRegistry} />
+                        ))}
+                      </div>
+                    ) : null}
+                    <p className="character-preview">{getCharacterPreview(character.background)}</p>
+                    <div className="meta-line">
+                      <span>{character.objectives.length} objectif(s)</span>
+                      <span>{character.secrets.length} secret(s)</span>
                     </div>
-                  ) : null}
-                  <p className="character-preview">{getCharacterPreview(character.background)}</p>
-                  <div className="meta-line">
-                    <span>{character.objectives.length} objectif(s)</span>
-                    <span>{character.secrets.length} secret(s)</span>
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <div className="empty-state">Aucun PJ pour l'instant.</div>
-            )}
-          </div>
+                  </Link>
+                ))
+              ) : (
+                <div className="empty-state">Aucun PJ pour l'instant.</div>
+              )}
+            </div>
+          ) : (
+            <div className="empty-state">
+              {playerCharacters.length} PJ masques pour alleger la lecture.
+            </div>
+          )}
         </div>
 
-        <div className="surface span-6">
+        <div className="surface span-12">
           <div className="section-header">
             <div>
               <p className="section-kicker">Repertoire</p>
               <h2 className="section-title">PNJ</h2>
             </div>
+            <button
+              type="button"
+              className="button-secondary-light"
+              onClick={() => setIsNonPlayerSectionOpen((current) => !current)}
+              aria-expanded={isNonPlayerSectionOpen}
+            >
+              {isNonPlayerSectionOpen ? "Masquer les PNJ" : "Ouvrir les PNJ"}
+            </button>
           </div>
-          <div className="list-stack">
-            {nonPlayerCharacters.length ? (
-              nonPlayerCharacters.map((character) => (
-                <Link href={`/characters/${character.id}`} className="list-item" key={character.id}>
-                  <h3>{character.name}</h3>
-                  {character.tags.length ? (
-                    <div className="badge-row">
-                      {character.tags.map((tag) => (
-                        <TagBadge key={tag} tag={tag} definitions={data.tagsRegistry} />
-                      ))}
+          {isNonPlayerSectionOpen ? (
+            <div className="list-stack">
+              {nonPlayerCharacters.length ? (
+                nonPlayerCharacters.map((character) => (
+                  <Link href={`/characters/${character.id}`} className="list-item" key={character.id}>
+                    <h3>{character.name}</h3>
+                    {character.tags.length ? (
+                      <div className="badge-row">
+                        {character.tags.map((tag) => (
+                          <TagBadge key={tag} tag={tag} definitions={data.tagsRegistry} />
+                        ))}
+                      </div>
+                    ) : null}
+                    <p className="character-preview">{getCharacterPreview(character.background)}</p>
+                    <div className="meta-line">
+                      <span>{character.objectives.length} objectif(s)</span>
+                      <span>{character.secrets.length} secret(s)</span>
                     </div>
-                  ) : null}
-                  <p className="character-preview">{getCharacterPreview(character.background)}</p>
-                  <div className="meta-line">
-                    <span>{character.objectives.length} objectif(s)</span>
-                    <span>{character.secrets.length} secret(s)</span>
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <div className="empty-state">Aucun PNJ pour l'instant.</div>
-            )}
-          </div>
+                  </Link>
+                ))
+              ) : (
+                <div className="empty-state">Aucun PNJ pour l'instant.</div>
+              )}
+            </div>
+          ) : (
+            <div className="empty-state">
+              {nonPlayerCharacters.length} PNJ masques pour alleger la lecture.
+            </div>
+          )}
         </div>
       </section>
     </>
